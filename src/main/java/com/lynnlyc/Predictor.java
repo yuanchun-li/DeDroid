@@ -16,6 +16,7 @@ import java.nio.file.Files;
 public class Predictor {
     public static File predict(File predictingData) {
         // TODO use the generated data to predict
+        // Assigned to @YZY
         File resultFile = new File(Config.outputDirPath + "/output.json");
         try {
             byte[] encoded = Files.readAllBytes(predictingData.toPath());
