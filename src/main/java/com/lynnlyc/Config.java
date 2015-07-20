@@ -142,9 +142,13 @@ public class Config {
 //        Options.v().set_src_prec(Options.src_prec_apk);
         Options.v().set_output_dir(Config.outputDirPath);
 
-        List<String> process_dirs = new ArrayList<String>();
+        List<String> process_dirs = new ArrayList<>();
         process_dirs.add(Config.codeDir);
         Options.v().set_process_dir(process_dirs);
+
+        if (Config.codeDir.endsWith(".apk")) {
+            Options.v().set_src_prec(Options.src_prec_apk);
+        }
         Options.v().set_output_format(Options.output_format_jimple);
 
         String classpath = "";

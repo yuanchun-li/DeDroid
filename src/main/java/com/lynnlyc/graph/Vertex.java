@@ -23,8 +23,6 @@ public class Vertex {
     public String name;
     private static int Count = 0;
 
-    public static HashMap<Integer, Vertex> infVertex = new HashMap<>();
-
     public Vertex(Graph g, Object content, String name, boolean isKnown) {
         this.content = content;
         this.name = name;
@@ -46,7 +44,7 @@ public class Vertex {
             String name = cls.getShortName();
             boolean isKnown = false;
             if (cls.isLibraryClass()) isKnown = true;
-            Vertex newVertex = new Vertex(g, object, name, isKnown);
+            Vertex newVertex = new Vertex(g, cls, name, isKnown);
             VertexMap.put(object, newVertex);
             return newVertex;
         }
@@ -58,7 +56,7 @@ public class Vertex {
                 isKnown = true;
             }
             if (method.isConstructor()) isKnown = true;
-            Vertex newVertex = new Vertex(g, object, name, isKnown);
+            Vertex newVertex = new Vertex(g, method, name, isKnown);
             VertexMap.put(object, newVertex);
             return newVertex;
         }
@@ -67,7 +65,7 @@ public class Vertex {
             String name = field.getName();
             boolean isKnown = false;
             if (field.getDeclaringClass().isLibraryClass()) isKnown = true;
-            Vertex newVertex = new Vertex(g, object, name, isKnown);
+            Vertex newVertex = new Vertex(g, field, name, isKnown);
             VertexMap.put(object, newVertex);
             return newVertex;
         }
@@ -78,14 +76,14 @@ public class Vertex {
                 return getVertexFromObject(g, refType.getSootClass());
             }
             String name = type.toString();
-            Vertex newVertex = new Vertex(g, object, name, true);
+            Vertex newVertex = new Vertex(g, type, name, true);
             VertexMap.put(object, newVertex);
             return newVertex;
         }
         if (object instanceof Integer) {
-            int modifier = (Integer)object;
+            Integer modifier = (Integer)object;
             String name = String.valueOf(modifier);
-            Vertex newVertex = new Vertex(g, object, name, true);
+            Vertex newVertex = new Vertex(g, modifier, name, true);
             VertexMap.put(object, newVertex);
             return newVertex;
         }
@@ -119,21 +117,20 @@ public class Vertex {
     }
 
     public void restoreName(String name) {
-        Object object = this.content;
-        if (object instanceof SootClass) {
-            SootClass cls = (SootClass) object;
+        if (this.content instanceof SootClass) {
+            SootClass cls = (SootClass) this.content;
             cls.setName(cls.getPackageName() + "." + name);
         }
-        if (object instanceof SootMethod) {
-            SootMethod method = (SootMethod) object;
+        else if (this.content instanceof SootMethod) {
+            SootMethod method = (SootMethod) this.content;
             method.setName(name);
         }
-        if (object instanceof SootField) {
-            SootField field = (SootField) object;
+        else if (this.content instanceof SootField) {
+            SootField field = (SootField) this.content;
             field.setName(name);
         }
         else {
-            String message = "unknown vertex type:" + object.getClass().toString();
+            String message = "unknown vertex type:" + this.content.getClass().toString();
             Util.LOGGER.warning(message);
         }
     }
