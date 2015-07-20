@@ -1,0 +1,336 @@
+########################################
+
+Nice2Server Interface Specification
+
+Author: YZY
+
+Date: 2015.7.19
+
+########################################
+
+
+I. JSNice's framework
+
+
+1.Predicting Pipeline:
+
+JavaScripts |   Parse    |          | Send to | Server   | Predict& |
+Input from  | Input Code | Features | Backend | Ruled by |  Return  | Result
+WebPage     |   =====>   |  (JSON)  |  ====>  | JSON RPC |   ====>  |
+
+2.Learning Pipeline:
+
+Traning Data  | Feature Extracting |  Feature Files   | Train | Model
+(JavaScripts) |     ========>      | (in JSON format) | ====> | File
+
+Notice:
+
+1. The server uses the model files for prediction.
+
+2. "Parse Input Code" and "Feature Extracting" use the same algorithm.
+
+3. The server is written in C++ using a C++ implemention of JSON-RPC.
+
+
+########################################
+
+
+II. Predicting Pipeline
+
+
+######## Parse Input Code ########
+
+
+This work is done by javascripts built into the viewer.html in Nice2Predict.
+
+The parser parses the js code and extract the features in JSON format.
+
+More specifically, a program is transformed to a JSON object. 
+
+Let's look at an example. 
+
+
+ORIGINAL JS CODE:
+
+function chunkData(e, t) {
+  var n = [];
+  var r = e.length;
+  var i = 0;
+  for (; i < r; i += t) {
+    if (i + t < r) {
+      n.push(e.substring(i, i + t));
+    } else {
+      n.push(e.substring(i, r));
+    }
+  }
+  return n;
+}   
+
+EXTRACTED FEATURES:
+
+{
+ "query":[
+  {"a": 0,	"b": 1,	"f2": "[0]:VarDef[1]"},
+  {"a": 0,	"b": 2,	"f2": "[0]:VarDef[1]Dot[0]"},
+  {"a": 2,	"b": 1,	"f2": "[1]:Dot[0]"},
+  {"a": 3,	"b": 4,	"f2": "[0]:VarDef[1]-Number"},
+  {"a": 3,	"b": 0,	"f2": "[0]:Binary<[1]"},
+  {"a": 3,	"b": 5,	"f2": "[0]Binary<[0]:For[1]Assign+=[1]"},
+  {"a": 0,	"b": 3,	"f2": "[1]Binary<[0]:For[1]Assign+=[0]"},
+  {"a": 0,	"b": 5,	"f2": "[1]Binary<[0]:For[1]Assign+=[1]"},
+  {"a": 3,	"b": 5,	"f2": "[0]:Assign+=[1]"},
+  {"a": 3,	"b": 5,	"f2": "[0]:Binary+[1]"},
+  {"a": 3,	"b": 0,	"f2": "[0]Binary+[0]:Binary<[1]"},
+  {"a": 5,	"b": 0,	"f2": "[1]Binary+[0]:Binary<[1]"},
+  {"a": 6,	"b": 7,	"f2": "[0]:Dot[0]"},
+  {"a": 6,	"b": 8,	"f2": "[0]Dot[0]:Call[1]Call[0]"},
+  {"a": 6,	"b": 3,	"f2": "[0]Dot[0]:Call[1]Call[1]"},
+  {"a": 7,	"b": 3,	"f2": "[0]:Call[1]Call[1]"},
+  {"a": 8,	"b": 3,	"f2": "[0]:Call[1]"},
+  {"a": 2,	"b": 8,	"f2": "[0]:Dot[0]"},
+  {"a": 2,	"b": 3,	"f2": "[0]Dot[0]:Call[1]"},
+  {"a": 2,	"b": 3,	"f2": "[0]Dot[0]:Call[2]Binary+[0]"},
+  {"a": 2,	"b": 5,	"f2": "[0]Dot[0]:Call[2]Binary+[1]"},
+  {"a": 8,	"b": 3,	"f2": "[0]:Call[2]Binary+[0]"},
+  {"a": 8,	"b": 5,	"f2": "[0]:Call[2]Binary+[1]"},
+  {"a": 3,	"b": 5,	"f2": "[1]:Call[2]Binary+[1]"},
+  {"a": 6,	"b": 0,	"f2": "[0]Dot[0]:Call[1]Call[2]"},
+  {"a": 7,	"b": 0,	"f2": "[0]:Call[1]Call[2]"},
+  {"a": 8,	"b": 0,	"f2": "[0]:Call[2]"},
+  {"a": 3,	"b": 0,	"f2": "[1]:Call[2]"},
+  {"a": 2,	"b": 0,	"f2": "[0]Dot[0]:Call[2]"},
+  {"a": 9,	"b": 2,	"f2": "FNPAR"},
+  {"a": 9,	"b": 5,	"f2": "FNPAR"},
+  {"a": 9,	"b": 6,	"f2": "FNDECL"},
+  {"a": 9,	"b": 0,	"f2": "FNDECL"},
+  {"a": 9,	"b": 3,	"f2": "FNDECL"},
+  {"a": 9,	"b": 6,	"f2": "FNRETURN"},
+  {"cn":"!=", "n":[0,2,3,5,6,9]}
+ ],
+ "assign":[
+  {"v": 0,	"inf": "r"},
+  {"v": 1,	"giv": "length"},
+  {"v": 2,	"inf": "e"},
+  {"v": 3,	"inf": "i"},
+  {"v": 4,	"giv": "0"},
+  {"v": 5,	"inf": "t"},
+  {"v": 6,	"inf": "n"},
+  {"v": 7,	"giv": "push"},
+  {"v": 8,	"giv": "substring"},
+  {"v": 9,	"giv": "chunkData"}
+ ]}
+
+
+The generated JSON object contains two keys: "query" and "assign".
+
+
+### query part ###
+
+"query" maps to an array, which describes the features extracted.
+
+Each element in the array corresponds to an edge.
+
+Each vertex in the graph built is represented by a natural number, and
+
+"a" maps to the first vertex in an edge, "b" maps to the second.
+
+"f2" maps to the edge's attribute, which is represented as a string. 
+
+Notice that, as long as we provide the same string representation system
+
+in both training data and test data, whether it is "FNRETURN" or 
+
+"FUNCRETURN" actually doesn't matter. 
+
+The "cn" part is trickier. 
+
+Let's look at a function from uglify.js(used as the parser)
+
+FeatureJsonOutputter.prototype.endScope = function() {
+    if (!this.has_features) {
+        return
+    }
+    var keys = Object.keys(this.cur_scope);
+    if (keys.length <= 1) {
+        return
+    }
+    this.openElem();
+    this.output += '"cn":"!=", "n":[';
+    this.output += keys[0];
+    for (var i = 1, length = keys.length; i < length; i++) {
+        this.output += ",";
+        this.output += keys[i]
+    }
+    this.output += "]";
+    this.closeElem()
+};
+
+Seems that "cn" will always be "!=", and the array "n" is constructed from 
+
+an array named "keys". 
+
+The "keys" is managed by a function named "addScopeConstraints"
+
+function addScopeConstraints(node, toplevel, feature_outputter) {
+    feature_outputter.beginScope();
+    var name = nodeToProperty(node);
+    if (name != null) feature_outputter.addToScope(name);
+    for (var i = 0; i < node.enclosed.length; i++) {
+        feature_outputter.addToScope(nodeToProperty(node.enclosed[i].orig[0]))
+    }
+    node.variables.each(function(symbol) {
+        feature_outputter.addToScope(nodeToProperty(symbol.orig[0]))
+    });
+    toplevel.globals.each(function(symbol) {
+        feature_outputter.addToScope(nodeToProperty(symbol.orig[0]))
+    });
+    feature_outputter.endScope()
+}
+
+And the "addToScope" function:
+
+FeatureJsonOutputter.prototype.addToScope = function(a) {
+    var a_id = this.string_map.getId(a);
+    this.cur_scope[a_id] = true
+};
+
+First of all, the scope name (if not null) is added to the "keys". 
+Except for that, the "keys" contains "enclosed", "variables" and "globals". 
+
+"enclosed": "[SymbolDef*/S] a list of all symbol definitions that are accessed
+             from this scope or any subscopes"
+
+"variables": "[Object/S] a map of name -> SymbolDef for all variables/functions
+              defined in this scope",
+
+"globals": "[Object/S] a map of name -> SymbolDef for all undeclared names"
+
+That is, a reference to an undeclared name in a scope, like this:
+
+function f(){
+	var n = i;
+}
+
+in which "i" is not declared and added to the "keys".
+
+
+
+### assign part ###
+
+"assign" describes the initial assignments.
+
+Each element corresponds to an assignment.
+
+"v" maps to the vertex number. 
+
+"inf" means "INFER", "giv" means "GIVEN", and they both maps to the 
+identifiers.
+
+In both learning and predicting algorithm, one should mark "what is to be
+
+predicted" as "inf", and all others to "giv".
+
+
+
+### Conclusion ###
+
+We should build JSON-formatted features files from programs according to 
+
+the rules specified above and pass them into the server. 
+
+
+
+
+######## Send to Backend ########
+
+
+The server is implemented based on a C++ JSON-RPC implementation so it 
+
+provides service according to the JSON-RPC standard. 
+
+JSON-RPC calls are represented by JSON objects. To make a call, just pass
+
+a JSON object to the server using a JSON-RPC library. 
+
+(I used Python, more specifically, pyjsonrpc)
+
+A "JSON-RPC JSON calling object" may look like this:
+
+{
+	"jsonrpc": "2.0"
+	"method": "add"
+	"params": [1, 2]
+	"id": "thelittlebrownfoxjumpsoveralazydog"
+}
+
+A returning object may look like this:
+
+{
+	"jsonrpc": "2.0"
+	"result": 3
+	"id": "thelittlebrownfoxjumpsoveralazydog"
+}
+
+
+For more info about JSON-RPC, checkout this:
+
+http://www.jsonrpc.org/specification
+
+or Chinese version:
+
+http://wiki.geekdream.com/Specification/json-rpc_2.0.html
+
+
+
+Now we have to know about what method does Nice2server provides. 
+
+Take a look at its source code: 
+
+bindAndAddMethod(
+    jsonrpc::Procedure("infer", jsonrpc::PARAMS_BY_NAME, jsonrpc::JSON_ARRAY,
+        // Parameters:
+        "query", jsonrpc::JSON_ARRAY,
+        "assign", jsonrpc::JSON_ARRAY,
+        NULL),
+    &Nice2ServerInternal::infer);
+bindAndAddMethod(
+    jsonrpc::Procedure("nbest", jsonrpc::PARAMS_BY_NAME, jsonrpc::JSON_ARRAY,
+        // Parameters:
+        "n", jsonrpc::JSON_INTEGER,
+        "query", jsonrpc::JSON_ARRAY,
+        "assign", jsonrpc::JSON_ARRAY,
+        NULL),
+    &Nice2ServerInternal::nbest);
+
+bindAndAddMethod(
+    jsonrpc::Procedure("showgraph", jsonrpc::PARAMS_BY_NAME, jsonrpc::JSON_OBJECT,
+        // Parameters:
+        "query", jsonrpc::JSON_ARRAY,
+        "assign", jsonrpc::JSON_ARRAY,
+        NULL),
+    &Nice2ServerInternal::showgraph);
+
+So the Nice2server have these methods: 
+
+"infer": Return the inference result. Accepting "query" and "assign"
+         as parameters.
+
+"nbest": Execute the approximate algorithm mentioned in the paper. Accepting "n"
+         (integer), "query" and "assign" as parameters. 
+
+"showgraph": Return the constructed graph. Accepting "query" and "assign"
+         as parameters.
+
+For more details, consult jsonrpc-pipe.py. 
+
+
+
+
+########################################
+
+
+III. Learning Pipeline
+
+The algorithm is the same as the predicting pipeline. 
+
+For more details, refer to the README.md in Nice2Server. 
