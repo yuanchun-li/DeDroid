@@ -114,6 +114,8 @@ public class Config {
             e.printStackTrace();
             return false;
         }
+        Util.LOGGER.info(String.format("[mode]%s, [input]%s, [output]%s",
+                mode, Config.codeDir, Config.outputDirPath));
         return true;
     }
 
@@ -158,7 +160,7 @@ public class Config {
             Options.v().set_force_android_jar(Config.forceAndroidJarPath);
 
         Config.isInitialized = true;
-        Util.LOGGER.log(Level.INFO,  "initialization finished...");
+        Util.LOGGER.info("initialization finished...");
     }
 
     public static PrintStream getResultPs() {

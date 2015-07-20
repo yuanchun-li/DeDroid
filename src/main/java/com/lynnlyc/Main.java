@@ -23,6 +23,7 @@ public class Main {
 //        sootAnalysis.dump(os);
         Graph g = sootAnalysis.run();
         g.dump(Config.getResultPs());
+
         if (Config.isTraining) {
             Trainer.train(Config.getResultFile());
         }

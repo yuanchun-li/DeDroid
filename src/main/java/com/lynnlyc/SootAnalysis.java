@@ -70,7 +70,7 @@ public class SootAnalysis {
     }
 
     public Graph run() {
-        Util.LOGGER.info("running soot analysis");
+        Util.LOGGER.info("extracting features");
         if (!Config.isInitialized) {
             Util.LOGGER.warning("Configuration not initialized");
             return null;
@@ -173,6 +173,7 @@ public class SootAnalysis {
                 }
             }
         }
+        Util.LOGGER.info("finished extracting features");
         return g;
     }
 }
