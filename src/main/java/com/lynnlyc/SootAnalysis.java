@@ -6,6 +6,7 @@ import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.jimple.FieldRef;
 import soot.jimple.InvokeExpr;
+import soot.options.Options;
 
 import java.io.PrintStream;
 import java.util.HashSet;
@@ -179,5 +180,9 @@ public class SootAnalysis {
         }
         Util.LOGGER.info("finished extracting features");
         return g;
+    }
+
+    public void output() {
+        PackManager.v().writeOutput();
     }
 }

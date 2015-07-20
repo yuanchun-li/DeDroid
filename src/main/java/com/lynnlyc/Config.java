@@ -6,6 +6,7 @@ package com.lynnlyc;
  */
 import soot.options.Options;
 
+import javax.swing.text.html.Option;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -148,7 +149,17 @@ public class Config {
 
         if (Config.codeDir.endsWith(".apk")) {
             Options.v().set_src_prec(Options.src_prec_apk);
+            Options.v().set_output_format(Options.output_format_dex);
         }
+        else if (Config.codeDir.endsWith(".jar")) {
+            Options.v().set_src_prec(Options.src_prec_class);
+            Options.v().set_output_jar(true);
+        }
+        else {
+            Options.v().set_src_prec(Options.src_prec_java);
+            Options.v().set_output_format(Options.output_format_jimple);
+        }
+
         Options.v().set_output_format(Options.output_format_jimple);
 
         String classpath = "";
@@ -167,7 +178,6 @@ public class Config {
                     classpath += file.getAbsolutePath() + ";";
                 }
             }
-
             Options.v().set_soot_classpath(classpath);
         }
 //        Options.v().set_ast_metrics(true);

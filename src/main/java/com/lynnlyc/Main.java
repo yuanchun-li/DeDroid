@@ -30,6 +30,7 @@ public class Main {
         else {
             File result = Predictor.predict(Config.getResultFile());
             g.restoreUnknownFromFile(result);
+            sootAnalysis.output();
         }
     }
 }

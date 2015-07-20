@@ -11,20 +11,6 @@ import soot.SootMethod;
 public class Util {
     public static final Logger LOGGER = Logger.getLogger("UnuglifyDEX");
 
-	public static List<SootMethod> findEntryPoints() {
-		ArrayList<SootMethod> entries = new ArrayList<>();
-		for (SootClass cls : Scene.v().getApplicationClasses()) {
-			if (cls.isAbstract()) continue;
-
-			for (SootMethod m : cls.getMethods()) {
-				entries.add(m);
-			}
-		}
-//		System.out.println(entries.size());
-//		System.out.println(entries);
-		return entries;
-	}
-
     public static String getTimeString() {
         long timeMillis = System.currentTimeMillis();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-hhmmss");
