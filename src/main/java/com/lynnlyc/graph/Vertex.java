@@ -54,7 +54,9 @@ public class Vertex {
             SootMethod method = (SootMethod) object;
             String name = method.getName();
             boolean isKnown = false;
-            if (method.getDeclaringClass().isLibraryClass()) isKnown = true;
+            if (method.getDeclaringClass().isLibraryClass()) {
+                isKnown = true;
+            }
             if (method.isConstructor()) isKnown = true;
             Vertex newVertex = new Vertex(g, object, name, isKnown);
             VertexMap.put(object, newVertex);
@@ -134,12 +136,5 @@ public class Vertex {
             String message = "unknown vertex type:" + object.getClass().toString();
             Util.LOGGER.warning(message);
         }
-    }
-}
-
-
-class UnknownVertexTypeException extends Exception {
-    public UnknownVertexTypeException(String message) {
-        super(message);
     }
 }

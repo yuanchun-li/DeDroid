@@ -3,4 +3,5 @@ out
 output
 target
 *.iml
-src/META-INF
+dependency-reduced-pom.xml
+src/main/java/META-INF

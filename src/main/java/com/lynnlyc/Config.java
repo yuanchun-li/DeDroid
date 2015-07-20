@@ -81,27 +81,42 @@ public class Config {
             Config.isTraining = false;
         }
         else {
+            System.out.println("Unknown mode, should be train or predict.");
             return false;
         }
 
-        if ("".equals(Config.codeDir))
+        if ("".equals(Config.codeDir)) {
+            System.out.println("Input file cannot be empty.");
             return false;
+        }
+
+        File codeDirFile = new File(Config.codeDir);
+        if (!codeDirFile.exists()) {
+            System.out.println("Input file does not exist.");
+            return false;
+        }
 
         File workingDir = new File(String.format("%s/UnuglifyDex_%S_%s/", Config.outputDirPath,
                 mode, Util.getTimeString()));
 
         Config.outputDirPath = workingDir.getPath();
-        if (!workingDir.exists() && !workingDir.mkdirs())
+        if (!workingDir.exists() && !workingDir.mkdirs()) {
+            System.out.println("Error generating output directory.");
             return false;
+        }
         logFile = new File(String.format("%s/%s.log", Config.outputDirPath, mode));
         resultFile = new File(String.format("%s/%s.json", Config.outputDirPath, mode));
 
         if (!"".equals(Config.librariesDir)){
             File lib = new File(Config.librariesDir);
-            if (!lib.exists())
+            if (!lib.exists()) {
+                System.out.println("Library does not exist.");
                 return false;
-            if (lib.isFile() && !lib.getName().endsWith(".jar"))
+            }
+            if (lib.isFile() && !lib.getName().endsWith(".jar")) {
+                System.out.println("Library format error, should be directory or jar.");
                 return false;
+            }
         }
 
         try {

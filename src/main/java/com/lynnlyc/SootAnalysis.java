@@ -75,7 +75,7 @@ public class SootAnalysis {
             Util.LOGGER.warning("Configuration not initialized");
             return null;
         }
-        PackManager.v().runPacks();
+//        PackManager.v().runPacks();
         Graph g = new Graph();
         HashSet<Vertex> globalScope = g.getNewScope();
 
@@ -155,21 +155,25 @@ public class SootAnalysis {
                 }
 
                 // consider the scope inside a method
-                HashSet<Vertex> methodScope = g.getNewScope();
-                methodScope.add(v_method);
-                Body body = method.retrieveActiveBody();
-                for (ValueBox valueBox : body.getUseAndDefBoxes()) {
-                    Value value = valueBox.getValue();
-                    if (value instanceof FieldRef) {
-                        Vertex v_used_field = Vertex.getVertexAndAddToScope(
-                                g, methodScope, ((FieldRef) value).getField());
-                        new Edge(g, Edge.TYPE_USE_FIELD, v_method, v_used_field);
+                if (method.getSource() == null) continue;
+                try {
+                    HashSet<Vertex> methodScope = g.getNewScope();
+                    methodScope.add(v_method);
+                    Body body = method.retrieveActiveBody();
+                    for (ValueBox valueBox : body.getUseAndDefBoxes()) {
+                        Value value = valueBox.getValue();
+                        if (value instanceof FieldRef) {
+                            Vertex v_used_field = Vertex.getVertexAndAddToScope(
+                                    g, methodScope, ((FieldRef) value).getField());
+                            new Edge(g, Edge.TYPE_USE_FIELD, v_method, v_used_field);
+                        } else if (value instanceof InvokeExpr) {
+                            Vertex v_used_method = Vertex.getVertexAndAddToScope(
+                                    g, methodScope, ((InvokeExpr) value).getMethod());
+                            new Edge(g, Edge.TYPE_USE_METHOD, v_method, v_used_method);
+                        }
                     }
-                    else if (value instanceof InvokeExpr) {
-                        Vertex v_used_method = Vertex.getVertexAndAddToScope(
-                                g, methodScope, ((InvokeExpr) value).getMethod());
-                        new Edge(g, Edge.TYPE_USE_METHOD, v_method, v_used_method);
-                    }
+                } catch (Exception e) {
+                    Util.logException(e);
                 }
             }
         }
