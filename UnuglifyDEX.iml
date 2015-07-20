@@ -17,9 +17,9 @@
       <excludeFolder url="file://$MODULE_DIR$/out/test" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
-    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="library" name="soot-trunk" level="project" />
-    <orderEntry type="library" name="net.sourceforge.json:com.springsource.net.sf.json:2.2.21" level="project" />
+    <orderEntry type="library" name="net.sourceforge.json:com.springsource.net.sf.json:2.2.2" level="project" />
   </component>
 </module>
