@@ -1,7 +1,6 @@
 .idea
 out
 output
-examples
 target
 *.iml
 src/META-INF
