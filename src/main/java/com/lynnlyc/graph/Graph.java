@@ -1,7 +1,7 @@
 package com.lynnlyc.graph;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,20 +23,20 @@ public class Graph {
     public HashMap<Integer, Vertex> unknownVertex;
 
     public Graph() {
-        vertexMap = new HashMap<Object, Vertex>();
-        edges = new HashSet<Edge>();
-        scopes = new HashSet<HashSet<Vertex>>();
-        unknownVertex = new HashMap<Integer, Vertex>();
+        vertexMap = new HashMap<>();
+        edges = new HashSet<>();
+        scopes = new HashSet<>();
+        unknownVertex = new HashMap<>();
     }
 
     public HashSet<Vertex> getNewScope() {
-        HashSet<Vertex> scope = new HashSet<Vertex>();
+        HashSet<Vertex> scope = new HashSet<>();
         scopes.add(scope);
         return scope;
     }
 
     public void dump(PrintStream ps) {
-        ps.println(this.toJson().toString(0, 4));
+        ps.println(this.toJson().toString());
         ps.flush();
     }
 
@@ -45,13 +45,13 @@ public class Graph {
         JSONArray query = new JSONArray();
         JSONArray assign = new JSONArray();
         for (Edge e : edges) {
-            query.add(e.toJson());
+            query.put(e.toJson());
         }
         for (HashSet<Vertex> scope : scopes) {
-            query.add(scope2Json(scope));
+            query.put(scope2Json(scope));
         }
         for (Vertex v : vertexMap.values()) {
-            assign.add(v.toJson());
+            assign.put(v.toJson());
         }
         jsonObject.put("query", query);
         jsonObject.put("assign", assign);
@@ -62,7 +62,7 @@ public class Graph {
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         for (Vertex v : scope) {
-            jsonArray.add(v.id);
+            jsonArray.put(v.id);
         }
         jsonObject.put("cn", "!=");
         jsonObject.put("n", jsonArray);
@@ -73,10 +73,10 @@ public class Graph {
         try {
             byte[] encoded = Files.readAllBytes(resultFile.toPath());
             String resultStr = new String(encoded, Charset.defaultCharset());
-            JSONArray resultJson = JSONArray.fromObject(resultStr);
-            for (Object aResultJson : resultJson) {
-                JSONObject jsonObject = (JSONObject) aResultJson;
-                if (jsonObject.containsKey("giv"))
+            JSONArray resultJson = new JSONArray(resultStr);
+            for (int i = 0; i < resultJson.length(); i++) {
+                JSONObject jsonObject = resultJson.getJSONObject(i);
+                if (jsonObject.has("giv"))
                     continue;
                 Integer id = (Integer) jsonObject.get("v");
                 String name = (String) jsonObject.get("inf");

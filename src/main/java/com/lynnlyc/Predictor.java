@@ -1,7 +1,7 @@
 package com.lynnlyc;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -20,7 +20,7 @@ public class Predictor {
         try {
             byte[] encoded = Files.readAllBytes(predictingData.toPath());
             String resultStr = new String(encoded, Charset.defaultCharset());
-            JSONObject resultJson = JSONObject.fromObject(resultStr);
+            JSONObject resultJson = new JSONObject(resultStr);
             FileWriter fileWriter = new FileWriter(resultFile);
             fileWriter.write(resultJson.get("assign").toString());
             fileWriter.close();

@@ -2,9 +2,8 @@ package com.lynnlyc.graph;
 
 import com.lynnlyc.Config;
 import com.lynnlyc.Util;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.util.JSONUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import soot.*;
 
 import java.io.*;
@@ -24,7 +23,7 @@ public class Vertex {
     public String name;
     private static int Count = 0;
 
-    public static HashMap<Integer, Vertex> infVertex = new HashMap<Integer, Vertex>();
+    public static HashMap<Integer, Vertex> infVertex = new HashMap<>();
 
     public Vertex(Graph g, Object content, String name, boolean isKnown) {
         this.content = content;

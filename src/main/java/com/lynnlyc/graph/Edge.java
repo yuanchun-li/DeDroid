@@ -1,6 +1,6 @@
 package com.lynnlyc.graph;
 
-import net.sf.json.JSONObject;
+import org.json.JSONObject;
 
 /**
  * Created by LiYC on 2015/7/19.

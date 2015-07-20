@@ -12,7 +12,7 @@ public class Util {
     public static final Logger LOGGER = Logger.getLogger("UnuglifyDEX");
 
 	public static List<SootMethod> findEntryPoints() {
-		ArrayList<SootMethod> entries = new ArrayList<SootMethod>();
+		ArrayList<SootMethod> entries = new ArrayList<>();
 		for (SootClass cls : Scene.v().getApplicationClasses()) {
 			if (cls.isAbstract()) continue;
 
@@ -37,7 +37,7 @@ public class Util {
                 "\t-i\tinput directory\n" +
                 "\t-o\toutput directory\n" +
                 "\t-m\tmode, train or predict\n" +
-                "\t-l\tlibraies directory" +
+                "\t-l\tlibraies directory\n" +
                 "\t-android-jars\tpath to sdk platforms\n" +
                 "\t-force-android-jar\tpath to android.jar\n" +
                 "\texample: java Main -i examples/train -o output -android-jars path/to/sdk/platforms\n";
