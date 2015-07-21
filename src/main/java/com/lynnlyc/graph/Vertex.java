@@ -52,10 +52,9 @@ public class Vertex {
             SootMethod method = (SootMethod) object;
             String name = method.getName();
             boolean isKnown = false;
-            if (method.getDeclaringClass().isLibraryClass()) {
-                isKnown = true;
-            }
-            if (method.isConstructor()) isKnown = true;
+            if (method.getDeclaringClass().isLibraryClass()) isKnown = true;
+            else if (method.isConstructor()) isKnown = true;
+            else if (name.startsWith("<") && name.endsWith(">")) isKnown = true;
             Vertex newVertex = new Vertex(g, method, name, isKnown);
             VertexMap.put(object, newVertex);
             return newVertex;
@@ -127,7 +126,8 @@ public class Vertex {
     }
 
     public void restoreName(String name) {
-        name += "_predict";
+        if (!name.endsWith(">"))
+            name += "_predict";
         if (this.content instanceof SootClass) {
             SootClass cls = (SootClass) this.content;
             cls.setName(cls.getPackageName() + "." + name);

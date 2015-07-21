@@ -152,7 +152,7 @@ public class Config {
 
         if (Config.codeDir.endsWith(".apk")) {
             Options.v().set_src_prec(Options.src_prec_apk);
-            Options.v().set_output_format(Options.output_format_force_dex);
+            Options.v().set_output_format(Options.output_format_dex);
         }
         else if (Config.codeDir.endsWith(".jar")) {
             Options.v().set_src_prec(Options.src_prec_class);
@@ -162,8 +162,6 @@ public class Config {
             Options.v().set_src_prec(Options.src_prec_java);
             Options.v().set_output_format(Options.output_format_jimple);
         }
-
-        Options.v().set_output_format(Options.output_format_jimple);
 
         String classpath = "";
         if (Config.librariesDir != null && !"".equals(Config.librariesDir)) {
