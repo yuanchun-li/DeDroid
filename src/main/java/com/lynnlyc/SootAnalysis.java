@@ -47,6 +47,7 @@ public class SootAnalysis {
                 os.println("-end of field info-");
 
             }
+            os.println("--methods--");
             for (SootMethod m : cls.getMethods()) {
                 os.println("-method info-");
                 os.println(m);
@@ -68,6 +69,22 @@ public class SootAnalysis {
             os.println("---end of class info---");
         }
         os.println("===end of Application Classes===");
+    }
+
+    public void lightDump(PrintStream os) {
+        for (SootClass cls : Scene.v().getApplicationClasses()) {
+            os.println("[class]");
+            os.println(cls);
+
+            os.println("\t[fields]");
+            for (SootField f : cls.getFields()) {
+                os.println("\t" + f);
+            }
+            os.println("\t[methods]");
+            for (SootMethod m : cls.getMethods()) {
+                os.println("\t" + m);
+            }
+        }
     }
 
     public Graph run() {
@@ -183,6 +200,7 @@ public class SootAnalysis {
     }
 
     public void output() {
+        this.lightDump(System.out);
         PackManager.v().writeOutput();
     }
 }

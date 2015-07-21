@@ -25,11 +25,10 @@ public class Main {
         g.dump(Config.getResultPs());
 
         if (Config.isTraining) {
-            Trainer.train(Config.getResultFile());
+            Trainer.train(g);
         }
         else {
-            File result = Predictor.predict(Config.getResultFile());
-            g.restoreUnknownFromFile(result);
+            Predictor.predict(g);
             sootAnalysis.output();
         }
     }

@@ -1,11 +1,18 @@
 package com.lynnlyc;
 
+import com.lynnlyc.graph.Graph;
+import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
+import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
+import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
+import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import soot.Scene;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 
@@ -14,20 +21,35 @@ import java.nio.file.Files;
  * Package: UnuglifyDEX
  */
 public class Predictor {
-    public static File predict(File predictingData) {
-        // TODO use the generated data to predict
-        // Assigned to @YZY
-        File resultFile = new File(Config.outputDirPath + "/output.json");
+    public static void predict(Graph g) {
+        Util.LOGGER.info("start predicting");
+
         try {
-            byte[] encoded = Files.readAllBytes(predictingData.toPath());
-            String resultStr = new String(encoded, Charset.defaultCharset());
-            JSONObject resultJson = new JSONObject(resultStr);
-            FileWriter fileWriter = new FileWriter(resultFile);
-            fileWriter.write(resultJson.get("assign").toString());
-            fileWriter.close();
-        } catch (IOException e) {
+            URL serverURL = new URL(Config.serverUrl);
+            JSONRPC2Session predictSession = new JSONRPC2Session(serverURL);
+            String predictMethod = "infer";
+            int requestID = 0;
+
+            JSONRPC2Request predictRequest = new JSONRPC2Request(
+                    predictMethod, g.toMap(), requestID);
+
+            JSONRPC2Response response = predictSession.send(predictRequest);
+
+            // Print response result / error
+            if (response.indicatesSuccess()) {
+                Util.LOGGER.info("finished predicting");
+                String resultStr = response.getResult().toString();
+                File resultFile = new File(Config.outputDirPath + "/result.json");
+                FileWriter resultFileWriter = new FileWriter(resultFile);
+                resultFileWriter.write(resultStr);
+                resultFileWriter.close();
+                g.restoreUnknownFromString(resultStr);
+            }
+            else
+                Util.LOGGER.warning(response.getError().getMessage());
+        } catch (IOException | JSONRPC2SessionException e) {
+            Util.LOGGER.warning("exception happened during predicting");
             e.printStackTrace();
         }
-        return resultFile;
     }
 }

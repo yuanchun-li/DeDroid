@@ -9,9 +9,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Created by LiYC on 2015/7/19.
@@ -59,6 +57,24 @@ public class Graph {
         return jsonObject;
     }
 
+    public Map<String, Object> toMap() {
+        HashMap<String, Object> requestMap = new HashMap<>();
+        ArrayList<Map> query = new ArrayList<>();
+        ArrayList<Map> assign = new ArrayList<>();
+        for (Edge e : edges) {
+            query.add(e.toMap());
+        }
+        for (HashSet<Vertex> scope : scopes) {
+            query.add(scope2Map(scope));
+        }
+        for (Vertex v : vertexMap.values()) {
+            assign.add(v.toMap());
+        }
+        requestMap.put("query", query);
+        requestMap.put("assign", assign);
+        return requestMap;
+    }
+
     public JSONObject scope2Json(HashSet<Vertex> scope) {
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
@@ -70,27 +86,41 @@ public class Graph {
         return jsonObject;
     }
 
+    public HashMap<String, Object> scope2Map(HashSet<Vertex> scope) {
+        HashMap<String, Object> scopeMap = new HashMap<>();
+        ArrayList<Integer> vertexArray = new ArrayList<>();
+        for (Vertex v : scope) {
+            vertexArray.add(v.id);
+        }
+        scopeMap.put("cn", "!=");
+        scopeMap.put("n", vertexArray);
+        return scopeMap;
+    }
+
     public void restoreUnknownFromFile(File resultFile) {
         try {
             byte[] encoded = Files.readAllBytes(resultFile.toPath());
             String resultStr = new String(encoded, Charset.defaultCharset());
-            JSONArray resultJson = new JSONArray(resultStr);
-            for (int i = 0; i < resultJson.length(); i++) {
-                JSONObject jsonObject = resultJson.getJSONObject(i);
-                if (jsonObject.has("giv"))
-                    continue;
-                Integer id = (Integer) jsonObject.get("v");
-                String name = (String) jsonObject.get("inf");
-//                System.out.println(id);
-                Vertex vertex = unknownVertex.get(id);
-                vertex.restoreName(name);
-//                System.out.println(vertex);
-//                System.out.println(vertex.content);
-            }
-
+            restoreUnknownFromString(resultStr);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public void restoreUnknownFromString(String resultStr) {
+        JSONArray resultJson = new JSONArray(resultStr);
+        for (int i = 0; i < resultJson.length(); i++) {
+            JSONObject jsonObject = resultJson.getJSONObject(i);
+            if (jsonObject.has("giv"))
+                continue;
+            Integer id = (Integer) jsonObject.get("v");
+            String name = (String) jsonObject.get("inf");
+//                System.out.println(id);
+            Vertex vertex = unknownVertex.get(id);
+            vertex.restoreName(name);
+//                System.out.println(vertex);
+//                System.out.println(vertex.content);
+        }
     }
 }

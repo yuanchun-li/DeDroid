@@ -16,6 +16,9 @@ import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
 
 public class Config {
+    // nice2predict server url for predicting
+    public static final String serverUrl = "http://localhost:5745";
+
     // Mode (training or predicting)
     public static boolean isTraining = false;
 
@@ -149,7 +152,7 @@ public class Config {
 
         if (Config.codeDir.endsWith(".apk")) {
             Options.v().set_src_prec(Options.src_prec_apk);
-            Options.v().set_output_format(Options.output_format_dex);
+            Options.v().set_output_format(Options.output_format_force_dex);
         }
         else if (Config.codeDir.endsWith(".jar")) {
             Options.v().set_src_prec(Options.src_prec_class);

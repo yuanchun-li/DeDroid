@@ -116,7 +116,18 @@ public class Vertex {
         return jsonObject;
     }
 
+    public HashMap<String, Object> toMap() {
+        HashMap<String, Object> vertexMap = new HashMap<>();
+        vertexMap.put("v", id);
+        if (isKnown)
+            vertexMap.put("giv", name);
+        else
+            vertexMap.put("inf", name);
+        return vertexMap;
+    }
+
     public void restoreName(String name) {
+        name += "_predict";
         if (this.content instanceof SootClass) {
             SootClass cls = (SootClass) this.content;
             cls.setName(cls.getPackageName() + "." + name);
