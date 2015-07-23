@@ -1,5 +1,7 @@
 package com.lynnlyc;
 
+import com.lynnlyc.graph.Graph;
+
 import java.io.File;
 
 /**
@@ -7,7 +9,7 @@ import java.io.File;
  * Package: UnuglifyDEX
  */
 public class Trainer {
-    public static void train(File trainingData) {
+    public static void train(Graph g) {
         // TODO use the generated data to train
     }
 }

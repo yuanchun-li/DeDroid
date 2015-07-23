@@ -6,6 +6,7 @@ package com.lynnlyc;
  */
 import soot.options.Options;
 
+import javax.swing.text.html.Option;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,6 +16,9 @@ import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
 
 public class Config {
+    // nice2predict server url for predicting
+    public static final String serverUrl = "http://localhost:5745";
+
     // Mode (training or predicting)
     public static boolean isTraining = false;
 
@@ -148,8 +152,16 @@ public class Config {
 
         if (Config.codeDir.endsWith(".apk")) {
             Options.v().set_src_prec(Options.src_prec_apk);
+            Options.v().set_output_format(Options.output_format_dex);
         }
-        Options.v().set_output_format(Options.output_format_jimple);
+        else if (Config.codeDir.endsWith(".jar")) {
+            Options.v().set_src_prec(Options.src_prec_class);
+            Options.v().set_output_jar(true);
+        }
+        else {
+            Options.v().set_src_prec(Options.src_prec_java);
+            Options.v().set_output_format(Options.output_format_jimple);
+        }
 
         String classpath = "";
         if (Config.librariesDir != null && !"".equals(Config.librariesDir)) {
@@ -167,7 +179,6 @@ public class Config {
                     classpath += file.getAbsolutePath() + ";";
                 }
             }
-
             Options.v().set_soot_classpath(classpath);
         }
 //        Options.v().set_ast_metrics(true);

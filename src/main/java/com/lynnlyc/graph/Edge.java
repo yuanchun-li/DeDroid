@@ -2,6 +2,8 @@ package com.lynnlyc.graph;
 
 import org.json.JSONObject;
 
+import java.util.HashMap;
+
 /**
  * Created by LiYC on 2015/7/19.
  * Package: UnuglifyDEX
@@ -37,6 +39,14 @@ public class Edge {
         jsonObject.put("b", target.id);
         jsonObject.put("f2", type);
         return jsonObject;
+    }
+
+    public HashMap<String, Object> toMap() {
+        HashMap<String, Object> edgeMap = new HashMap<>();
+        edgeMap.put("a", source.id);
+        edgeMap.put("b", target.id);
+        edgeMap.put("f2", type);
+        return edgeMap;
     }
 
     public String toString() {
