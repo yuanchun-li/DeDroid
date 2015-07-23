@@ -5,16 +5,12 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import soot.Scene;
+import net.sf.json.JSONArray;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 
 /**
  * Created by LiYC on 2015/7/18.
@@ -51,5 +47,34 @@ public class Predictor {
             Util.LOGGER.warning("exception happened during predicting");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * evaluate the result of prediction
+     * @param origin: original vertex array,
+     *              i.e. the ``assign'' element of predict.json
+     * @param result: prediction result,
+     *              i.e. the predicted vertex array
+     */
+    public static void evaluate_result(JSONArray origin, JSONArray result) {
+        Util.LOGGER.info("start evaluation");
+        File reportFile = new File(Config.outputDirPath + "/report.txt");
+        // TODO export evaluation result to report.txt
+        // Assign to @YZY
+    }
+
+    /**
+     * generate a proguard-like mapping.txt
+     * @param origin: original vertex array,
+     *              i.e. the ``assign'' element of predict.json
+     * @param result: prediction result,
+     *              i.e. the predicted vertex array
+     */
+    public static void generate_mapping(JSONArray origin, JSONArray result) {
+        Util.LOGGER.info("generating mapping.txt");
+        File reportFile = new File(Config.outputDirPath + "/mapping.txt");
+        // TODO generate a mapping.txt file
+        // See proguard for more details
+        // Assign to @YZY or @ZYH
     }
 }
