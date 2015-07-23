@@ -21,6 +21,8 @@ public class Edge {
     public static final String TYPE_EXCEPTION = "exception";
     public static final String TYPE_USE_FIELD = "use_field";
     public static final String TYPE_USE_METHOD = "use_method";
+    public static final String TYPE_PACKAGE_JOINT = "package_joint";
+    public static final String TYPE_BELONG_TO_PACKAGE = "belong_to_package";
 
     public Edge(Graph g, String type, Vertex source, Vertex target) {
         this.type = type;

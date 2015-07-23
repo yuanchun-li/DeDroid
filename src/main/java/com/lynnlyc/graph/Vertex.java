@@ -22,6 +22,7 @@ public class Vertex {
     public boolean isKnown = false;
     public String name;
     private static int Count = 0;
+    private static final String rootCode = "UnunlifyDEX_ROOT";
 
     public Vertex(Graph g, Object content, String name, boolean isKnown) {
         this.content = content;
@@ -34,7 +35,16 @@ public class Vertex {
         Count++;
     }
 
-    public static Vertex getVertexFromObject (Graph g, Object object) {
+    public static Vertex getRootVertex(Graph g, HashSet<Vertex> scope) {
+        if (g.vertexMap.containsKey(rootCode))
+            return g.vertexMap.get(rootCode);
+        Vertex v_root = new Vertex(g, rootCode, rootCode, true);
+        g.vertexMap.put(rootCode, v_root);
+        scope.add(v_root);
+        return v_root;
+    }
+
+    public static Vertex getVertexFromObject(Graph g, Object object) {
         HashMap<Object, Vertex> VertexMap = g.vertexMap;
         if (VertexMap.containsKey(object)) {
             return VertexMap.get(object);
@@ -84,6 +94,12 @@ public class Vertex {
             Integer modifier = (Integer)object;
             String name = String.valueOf(modifier);
             Vertex newVertex = new Vertex(g, modifier, name, true);
+            VertexMap.put(object, newVertex);
+            return newVertex;
+        }
+        if (object instanceof String) {
+            String package_seg = (String) object;
+            Vertex newVertex = new Vertex(g, package_seg, package_seg, false);
             VertexMap.put(object, newVertex);
             return newVertex;
         }

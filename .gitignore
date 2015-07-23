@@ -2,6 +2,7 @@
 out
 output
 target
+external
 *.iml
 dependency-reduced-pom.xml
 src/main/java/META-INF

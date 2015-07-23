@@ -78,10 +78,44 @@ public class SootAnalysis {
 //        PackManager.v().runPacks();
         Graph g = new Graph();
         HashSet<Vertex> globalScope = g.getNewScope();
+        Vertex v_root = Vertex.getRootVertex(g, globalScope);
+
+        HashSet<String> detectedPackages = new HashSet<>();
+        HashSet<String> detectedPackageJoints = new HashSet<>();
 
         Util.LOGGER.info("generating graph");
         for (SootClass cls : Scene.v().getApplicationClasses()) {
             Vertex v_cls = Vertex.getVertexAndAddToScope(g, globalScope, cls);
+            String package_name = cls.getPackageName();
+
+            if (package_name != null && !"".equals(package_name)) {
+                String[] package_segs = package_name.split("\\.");
+                String last_seg;
+                last_seg = package_segs[package_segs.length - 1];
+
+                // add package_joint edges
+                if (!detectedPackages.contains(package_name)) {
+                    Vertex v_prev_seg = v_root;
+                    for (String package_seg : package_segs) {
+                        String package_joint = package_seg + "." + v_prev_seg.content;
+                        Vertex v_seg = Vertex.getVertexAndAddToScope(
+                                g, globalScope, package_seg);
+                        if (!detectedPackageJoints.contains(package_joint)) {
+                            new Edge(g, Edge.TYPE_PACKAGE_JOINT, v_seg, v_prev_seg);
+                            detectedPackageJoints.add(package_joint);
+                        }
+                        v_prev_seg = v_seg;
+                    }
+                    detectedPackages.add(package_name);
+                }
+
+                // add belong to package edges
+                Vertex v_last_seg = Vertex.getVertexAndAddToScope(
+                        g, globalScope, last_seg);
+                new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls, v_last_seg);
+            } else {
+                new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls, v_root);
+            }
 
             // add INHERIT edges
             SootClass super_cls = cls.getSuperclass();
