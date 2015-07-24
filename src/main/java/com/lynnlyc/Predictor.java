@@ -5,7 +5,10 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
-import net.sf.json.JSONArray;
+//import net.sf.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONArray;
+
 
 import java.io.File;
 import java.io.FileWriter;
@@ -58,70 +61,75 @@ public class Predictor {
      */
     public static void evaluate_result(JSONArray origin, JSONArray result) {
         Util.LOGGER.info("start evaluation");
-        File reportFile = new File(Config.outputDirPath + "/report.txt");
-        FileWriter reportFileWriter = new FileWriter(reportFile);
 
-        // TODO export evaluation result to report.txt
-        // Assign to @YZY
+        try {
+            File reportFile = new File(Config.outputDirPath + "/report.txt");
+            FileWriter reportFileWriter = new FileWriter(reportFile);
 
-        Integer infCorrectNum = 0, allCorrectNum = 0, infNum = 0;
-        Integer allNum = origin.length();
+            // TODO export evaluation result to report.txt
+            // Assign to @YZY
 
-        // Prepare the array for evaluation
+            Integer infCorrectNum = 0, allCorrectNum = 0, infNum = 0;
+            Integer allNum = origin.length();
 
-        String[] resultList = new String[allNum];
-        String[] originList = new String[allNum];
+            // Prepare the array for evaluation
 
-        // Fill the arrays
+            String[] resultList = new String[allNum];
+            String[] originList = new String[allNum];
 
-        for (int i = 0; i < allNum; i++){
-            JSONObject resultJsonObject = result.getJSONObject(i);
-            JSONObject originJsonObject = origin.getJSONObject(i);
+            // Fill the arrays
 
-            Integer resultId = (Integer) resultJsonObject.get("v");
-            Integer originId = (Integer) originJsonObject.get("v");
-            
-            if (resultJsonObject.has("giv")){
-                // given nodes filled with "null" identifier
-                resultList[resultId] = null;
-            }
-            else{
-                String resultName = (String) resultJsonObject.get("inf");
-                resultList[resultId] = resultName;
-            }
+            for (int i = 0; i < allNum; i++){
+                JSONObject resultJsonObject = result.getJSONObject(i);
+                JSONObject originJsonObject = origin.getJSONObject(i);
 
-            if (originJsonObject.has("giv")){
-                originList[originId] = null;
-            }
-            else{
-                String originName = (String) originJsonObject.get("inf");
-                originList[originId] = originName;
-            }
-        }
+                Integer resultId = (Integer) resultJsonObject.get("v");
+                Integer originId = (Integer) originJsonObject.get("v");
+                
+                if (resultJsonObject.has("giv")){
+                    // given nodes filled with "null" identifier
+                    resultList[resultId] = null;
+                }
+                else{
+                    String resultName = (String) resultJsonObject.get("inf");
+                    resultList[resultId] = resultName;
+                }
 
-        // Evaluate and output
-        for (int i = 0; i < allNum; i++){
-            if (resultList[i] == null){
-                allCorrectNum++;
-            }
-            else{
-                infNum++;
-                if (resultList[i] == originList[i]){
-                    infCorrectNum++;
-                    allCorrectNum++;
+                if (originJsonObject.has("giv")){
+                    originList[originId] = null;
+                } else {
+                    String originName = (String) originJsonObject.get("inf");
+                    originList[originId] = originName;
                 }
             }
-            String reportStr = originList[i] + " -> " resultList[i];
-            resultFileWriter.write(reportStr);
+
+            // Evaluate and output
+            for (int i = 0; i < allNum; i++){
+                if (resultList[i] == null){
+                    allCorrectNum++;
+                } else {
+                    infNum++;
+                    if (resultList[i] == originList[i]){
+                        infCorrectNum++;
+                        allCorrectNum++;
+                    }
+                }
+                String reportStr = originList[i] + " -> " + resultList[i];
+                reportFileWriter.write(reportStr);
+            }
+            reportFileWriter.close();
+
+            double errorRate = (double)(infNum - infCorrectNum) / (double)infNum;
+
+            Util.LOGGER.info("evaluation finished.");
+            Util.LOGGER.info(infNum + " inf's in total with "
+                             + (infNum - infCorrectNum) + " wrong labels. ");
+            Util.LOGGER.info("error rate " + errorRate);
+
+        } catch (IOException e) {
+            Util.LOGGER.warning("exception happened during evaluation");
+            e.printStackTrace();
         }
-        resultFileWriter.close();
-
-        double errorRate = (double)(infNum - infCorrectNum) / (double)infNum;
-
-        Util.LOGGER.info("evaluation finished.");
-        Util.LOGGER.info(infNum.toString() + " inf's in total with "
-                         + (infNum - infCorrectNum).toString() + " wrong labels. ")
-        Util.LOGGER.info("error rate " + errorRate.toString());
     }
 
     /**
@@ -138,5 +146,4 @@ public class Predictor {
         // See proguard for more details
         // Assign to @YZY or @ZYH
     }
-        }
 }
