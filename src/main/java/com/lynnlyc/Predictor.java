@@ -8,6 +8,7 @@ import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
 //import net.sf.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONTokener;
 
 
 import java.io.File;
@@ -43,6 +44,16 @@ public class Predictor {
                 resultFileWriter.write(resultStr);
                 resultFileWriter.close();
                 g.restoreUnknownFromString(resultStr);
+
+                // Modified to insert a evaluation pass
+                JSONTokener tokener = new JSONTokener(resultStr);
+                JSONObject resultObject = (JSONObject) tokener.nextValue();
+                JSONArray result = (JSONArray) resultObject.get("assign");
+
+                JSONObject originObject = g.toJson();
+                JSONArray origin = (JSONArray) originObject.get("assign");
+
+                evaluate_result(origin, result);
             }
             else
                 Util.LOGGER.warning(response.getError().getMessage());
