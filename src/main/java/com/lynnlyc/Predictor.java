@@ -5,7 +5,11 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
-import net.sf.json.JSONArray;
+//import net.sf.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONTokener;
+
 
 import java.io.File;
 import java.io.FileWriter;
@@ -40,6 +44,15 @@ public class Predictor {
                 resultFileWriter.write(resultStr);
                 resultFileWriter.close();
                 g.restoreUnknownFromString(resultStr);
+
+                // Modified to insert a evaluation pass
+                JSONTokener tokener = new JSONTokener(resultStr);
+                JSONArray result = (JSONArray) tokener.nextValue();
+
+                JSONObject originObject = g.toJson();
+                JSONArray origin = (JSONArray) originObject.get("assign");
+
+                evaluate_result(origin, result);
             }
             else
                 Util.LOGGER.warning(response.getError().getMessage());
@@ -58,9 +71,75 @@ public class Predictor {
      */
     public static void evaluate_result(JSONArray origin, JSONArray result) {
         Util.LOGGER.info("start evaluation");
-        File reportFile = new File(Config.outputDirPath + "/report.txt");
-        // TODO export evaluation result to report.txt
-        // Assign to @YZY
+
+        try {
+            File reportFile = new File(Config.outputDirPath + "/report.txt");
+            FileWriter reportFileWriter = new FileWriter(reportFile);
+
+            // TODO export evaluation result to report.txt
+            // Assign to @YZY
+
+            Integer infCorrectNum = 0, allCorrectNum = 0, infNum = 0;
+            Integer allNum = origin.length();
+
+            // Prepare the array for evaluation
+
+            String[] resultList = new String[allNum];
+            String[] originList = new String[allNum];
+
+            // Fill the arrays
+
+            for (int i = 0; i < allNum; i++){
+                JSONObject resultJsonObject = result.getJSONObject(i);
+                JSONObject originJsonObject = origin.getJSONObject(i);
+
+                Integer resultId = (Integer) resultJsonObject.get("v");
+                Integer originId = (Integer) originJsonObject.get("v");
+                
+                if (resultJsonObject.has("giv")){
+                    // given nodes filled with "null" identifier
+                    resultList[resultId] = null;
+                }
+                else{
+                    String resultName = (String) resultJsonObject.get("inf");
+                    resultList[resultId] = resultName;
+                }
+
+                if (originJsonObject.has("giv")){
+                    originList[originId] = null;
+                } else {
+                    String originName = (String) originJsonObject.get("inf");
+                    originList[originId] = originName;
+                }
+            }
+
+            // Evaluate and output
+            for (int i = 0; i < allNum; i++){
+                if (resultList[i] == null){
+                    allCorrectNum++;
+                } else {
+                    infNum++;
+                    if (resultList[i].equals(originList[i])){
+                        infCorrectNum++;
+                        allCorrectNum++;
+                    }
+                    String reportStr = originList[i] + " -> " + resultList[i];
+                    reportFileWriter.write(reportStr + "\n");
+                }
+            }
+            reportFileWriter.close();
+
+            double errorRate = (double)(infNum - infCorrectNum) / (double)infNum;
+
+            Util.LOGGER.info("evaluation finished.");
+            Util.LOGGER.info(infNum + " inf's in total with "
+                             + (infNum - infCorrectNum) + " wrong labels. ");
+            Util.LOGGER.info("error rate " + errorRate);
+
+        } catch (IOException e) {
+            Util.LOGGER.warning("exception happened during evaluation");
+            e.printStackTrace();
+        }
     }
 
     /**
