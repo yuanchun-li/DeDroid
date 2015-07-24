@@ -29,7 +29,7 @@ public class Main {
         }
         else {
             Predictor.predict(g);
-            sootAnalysis.output();
+            //sootAnalysis.output();
         }
     }
 }

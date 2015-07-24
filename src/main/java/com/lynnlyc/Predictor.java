@@ -47,8 +47,7 @@ public class Predictor {
 
                 // Modified to insert a evaluation pass
                 JSONTokener tokener = new JSONTokener(resultStr);
-                JSONObject resultObject = (JSONObject) tokener.nextValue();
-                JSONArray result = (JSONArray) resultObject.get("assign");
+                JSONArray result = (JSONArray) tokener.nextValue();
 
                 JSONObject originObject = g.toJson();
                 JSONArray origin = (JSONArray) originObject.get("assign");
@@ -120,13 +119,13 @@ public class Predictor {
                     allCorrectNum++;
                 } else {
                     infNum++;
-                    if (resultList[i] == originList[i]){
+                    if (resultList[i].equals(originList[i])){
                         infCorrectNum++;
                         allCorrectNum++;
                     }
+                    String reportStr = originList[i] + " -> " + resultList[i];
+                    reportFileWriter.write(reportStr + "\n");
                 }
-                String reportStr = originList[i] + " -> " + resultList[i];
-                reportFileWriter.write(reportStr);
             }
             reportFileWriter.close();
 
