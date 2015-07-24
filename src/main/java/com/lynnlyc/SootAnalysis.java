@@ -234,7 +234,6 @@ public class SootAnalysis {
     }
 
     public void output() {
-        this.lightDump(System.out);
         PackManager.v().writeOutput();
     }
 }
