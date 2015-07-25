@@ -2,9 +2,11 @@ package com.lynnlyc.graph;
 
 import com.lynnlyc.Config;
 import com.lynnlyc.Util;
+import com.lynnlyc.sootextension.ObfuscationDetector;
 import com.lynnlyc.sootextension.PackageSeg;
 import org.json.JSONObject;
 import soot.*;
+import soot.tagkit.CodeAttribute;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,19 +23,16 @@ public class Vertex {
 
     private String predictedName;
 
-    private static int Count = 0;
+    private static int count = 0;
 
     public Vertex(Graph g, Object content, String name, boolean isKnown) {
         this.content = content;
         this.name = name;
         this.isKnown = isKnown;
-        this.id = Count;
-        this.predictedName = name;
-        if (!this.isKnown) {
-            this.predictedName = Util.UNKNOWN;
-            g.unknownVertex.put(this.id, this);
-        }
-        Count++;
+        this.id = count;
+        this.predictedName = this.isKnown? name : Util.UNKNOWN;
+        count++;
+        g.vertexMap.put(content, this);
     }
 
     public static Vertex getRootVertexAndAddToScope(Graph g, HashSet<Vertex> scope) {
@@ -46,14 +45,16 @@ public class Vertex {
         if (VertexMap.containsKey(object)) {
             return VertexMap.get(object);
         }
+
+        if (Config.isTraining && ObfuscationDetector.isObfuscated(object))
+            return null;
+
         if (object instanceof SootClass) {
             SootClass cls = (SootClass) object;
             String name = cls.getShortName();
             boolean isKnown = false;
             if (cls.isLibraryClass()) isKnown = true;
-            Vertex newVertex = new Vertex(g, cls, name, isKnown);
-            VertexMap.put(object, newVertex);
-            return newVertex;
+            return new Vertex(g, cls, name, isKnown);
         }
         if (object instanceof SootMethod) {
             SootMethod method = (SootMethod) object;
@@ -62,18 +63,14 @@ public class Vertex {
             if (method.getDeclaringClass().isLibraryClass()) isKnown = true;
             else if (method.isConstructor()) isKnown = true;
             else if (name.startsWith("<") && name.endsWith(">")) isKnown = true;
-            Vertex newVertex = new Vertex(g, method, name, isKnown);
-            VertexMap.put(object, newVertex);
-            return newVertex;
+            return new Vertex(g, method, name, isKnown);
         }
         if (object instanceof SootField) {
             SootField field = (SootField) object;
             String name = field.getName();
             boolean isKnown = false;
             if (field.getDeclaringClass().isLibraryClass()) isKnown = true;
-            Vertex newVertex = new Vertex(g, field, name, isKnown);
-            VertexMap.put(object, newVertex);
-            return newVertex;
+            return new Vertex(g, field, name, isKnown);
         }
         if (object instanceof Type) {
             Type type = (Type) object;
@@ -82,22 +79,16 @@ public class Vertex {
                 return getVertexFromObject(g, refType.getSootClass());
             }
             String name = type.toString();
-            Vertex newVertex = new Vertex(g, type, name, true);
-            VertexMap.put(object, newVertex);
-            return newVertex;
+            return new Vertex(g, type, name, true);
         }
         if (object instanceof Integer) {
             Integer modifier = (Integer)object;
             String name = String.valueOf(modifier);
-            Vertex newVertex = new Vertex(g, modifier, name, true);
-            VertexMap.put(object, newVertex);
-            return newVertex;
+            return new Vertex(g, modifier, name, true);
         }
         if (object instanceof PackageSeg) {
             PackageSeg packageSeg = (PackageSeg) object;
-            Vertex newVertex = new Vertex(g, packageSeg, packageSeg.getSegName(), false);
-            VertexMap.put(object, newVertex);
-            return newVertex;
+            return new Vertex(g, packageSeg, packageSeg.getSegName(), false);
         }
         else {
             String message = "unknown vertex type:" + object.getClass().toString();

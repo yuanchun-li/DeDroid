@@ -23,7 +23,6 @@ public class Graph {
     public HashMap<Object, Vertex> vertexMap;
     public HashSet<Edge> edges;
     public HashSet<HashSet<Vertex>> scopes;
-    public HashMap<Integer, Vertex> unknownVertex;
     public HashMap<String, Vertex> lastSegVertexOfPackage;
     public Vertex v_root;
 
@@ -31,12 +30,10 @@ public class Graph {
         vertexMap = new HashMap<>();
         edges = new HashSet<>();
         scopes = new HashSet<>();
-        unknownVertex = new HashMap<>();
         lastSegVertexOfPackage = new HashMap<>();
         predictedPackageNames = new HashMap<>();
         PackageSeg rootSeg = new PackageSeg(rootCode, rootCode);
         v_root = new Vertex(this, rootSeg, rootSeg.getSegName(), true);
-        vertexMap.put(rootSeg, v_root);
     }
 
     public HashSet<Vertex> getNewScope() {
@@ -125,13 +122,16 @@ public class Graph {
     }
 
     public void restoreUnknownFromJson(JSONArray resultJson) {
+        HashMap<Integer, Vertex> id2VertexMap = new HashMap<>();
+        for (Vertex v : this.vertexMap.values())
+            id2VertexMap.put(v.id, v);
         for (int i = 0; i < resultJson.length(); i++) {
             JSONObject jsonObject = resultJson.getJSONObject(i);
             if (jsonObject.has("giv"))
                 continue;
             Integer id = (Integer) jsonObject.get("v");
             String name = (String) jsonObject.get("inf");
-            Vertex vertex = unknownVertex.get(id);
+            Vertex vertex = id2VertexMap.get(id);
             vertex.setPredictedName(name);
         }
     }

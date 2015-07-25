@@ -1,6 +1,8 @@
 package com.lynnlyc;
 
 import com.lynnlyc.graph.Graph;
+import com.lynnlyc.graph.Vertex;
+import com.lynnlyc.sootextension.ObfuscationDetector;
 import com.lynnlyc.sootextension.OutputUtils;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
@@ -162,6 +164,18 @@ public class Predictor {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             Util.LOGGER.warning("generating mapping.txt failed");
+        }
+    }
+
+    /**
+     * transform the graph
+     * convert `well-named` inf vertexes to giv
+     * @param g
+     */
+    public static void transform(Graph g) {
+        for (Vertex v : g.vertexMap.values()) {
+            if (!v.isKnown && !ObfuscationDetector.isObfuscated(v.content))
+                v.isKnown = true;
         }
     }
 }

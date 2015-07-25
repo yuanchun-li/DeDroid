@@ -30,7 +30,8 @@ public class Edge {
         this.type = type;
         this.source = source;
         this.target = target;
-        g.edges.add(this);
+        if (source != null && target != null)
+            g.edges.add(this);
     }
 
     public JSONObject toJson() {

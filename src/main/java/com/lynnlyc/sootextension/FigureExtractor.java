@@ -1,6 +1,7 @@
 package com.lynnlyc.sootextension;
 
 import com.lynnlyc.Config;
+import com.lynnlyc.Predictor;
 import com.lynnlyc.Util;
 import com.lynnlyc.graph.Edge;
 import com.lynnlyc.graph.Graph;
@@ -33,6 +34,9 @@ public class FigureExtractor {
 
         Util.LOGGER.info("generating graph");
         for (SootClass cls : Scene.v().getApplicationClasses()) {
+            if (Config.isTraining && ObfuscationDetector.isClassObfuscated(cls))
+                continue;
+
             Vertex v_cls = Vertex.getVertexAndAddToScope(g, globalScope, cls);
 
             // add belong to package edges
@@ -135,6 +139,8 @@ public class FigureExtractor {
             }
         }
         Util.LOGGER.info("finished extracting features");
+        if (!Config.isTraining)
+            Predictor.transform(g);
         return g;
     }
 }

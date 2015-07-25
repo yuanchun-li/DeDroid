@@ -4,9 +4,6 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
-import soot.Scene;
-import soot.SootClass;
-import soot.SootMethod;
 
 public class Util {
     public static final Logger LOGGER = Logger.getLogger("UnuglifyDEX");
