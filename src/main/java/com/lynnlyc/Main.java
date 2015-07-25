@@ -1,12 +1,18 @@
 package com.lynnlyc;
 
 import com.lynnlyc.graph.Graph;
-import com.lynnlyc.graph.Vertex;
+import com.lynnlyc.sootextension.FigureExtractor;
+import com.lynnlyc.sootextension.OutputUtils;
 
-import java.io.File;
 import java.io.PrintStream;
 
 public class Main {
+    //TODO 1: add method override edges
+    //TODO 2: filter training data and predicting data
+    //DONE 3: generate mapping
+    //TODO 4: evaluate with open source apps:
+    // for each open-sourced app, generate a debug version,
+    // a release version and the mapping.txt corresponding to the release version
 
     public static void main(String[] args) {
 	// write your code here
@@ -19,17 +25,17 @@ public class Main {
 
         Config.init();
 
-        SootAnalysis sootAnalysis = new SootAnalysis();
-//        sootAnalysis.dump(os);
-        Graph g = sootAnalysis.run();
+//        OutputUtils.dumpInfo(os);
+
+        FigureExtractor figureExtractor = new FigureExtractor();
+        Graph g = figureExtractor.run();
         g.dump(Config.getResultPs());
 
         if (Config.isTraining) {
             Trainer.train(g);
         }
         else {
-            Predictor.predict(g);
-            //sootAnalysis.output();
+            Predictor.mockPredict(g);
         }
     }
 }

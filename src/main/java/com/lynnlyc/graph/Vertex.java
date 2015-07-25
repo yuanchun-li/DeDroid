@@ -2,13 +2,10 @@ package com.lynnlyc.graph;
 
 import com.lynnlyc.Config;
 import com.lynnlyc.Util;
-import org.json.JSONArray;
+import com.lynnlyc.sootextension.PackageSeg;
 import org.json.JSONObject;
 import soot.*;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -21,27 +18,27 @@ public class Vertex {
     public int id;
     public boolean isKnown = false;
     public String name;
+
+    private String predictedName;
+
     private static int Count = 0;
-    private static final String rootCode = "UnunlifyDEX_ROOT";
 
     public Vertex(Graph g, Object content, String name, boolean isKnown) {
         this.content = content;
         this.name = name;
         this.isKnown = isKnown;
         this.id = Count;
-        if (!Config.isTraining && !this.isKnown) {
+        this.predictedName = name;
+        if (!this.isKnown) {
+            this.predictedName = Util.UNKNOWN;
             g.unknownVertex.put(this.id, this);
         }
         Count++;
     }
 
-    public static Vertex getRootVertex(Graph g, HashSet<Vertex> scope) {
-        if (g.vertexMap.containsKey(rootCode))
-            return g.vertexMap.get(rootCode);
-        Vertex v_root = new Vertex(g, rootCode, rootCode, true);
-        g.vertexMap.put(rootCode, v_root);
-        scope.add(v_root);
-        return v_root;
+    public static Vertex getRootVertexAndAddToScope(Graph g, HashSet<Vertex> scope) {
+        scope.add(g.v_root);
+        return g.v_root;
     }
 
     public static Vertex getVertexFromObject(Graph g, Object object) {
@@ -96,9 +93,9 @@ public class Vertex {
             VertexMap.put(object, newVertex);
             return newVertex;
         }
-        if (object instanceof String) {
-            String package_seg = (String) object;
-            Vertex newVertex = new Vertex(g, package_seg, package_seg, false);
+        if (object instanceof PackageSeg) {
+            PackageSeg packageSeg = (PackageSeg) object;
+            Vertex newVertex = new Vertex(g, packageSeg, packageSeg.getSegName(), false);
             VertexMap.put(object, newVertex);
             return newVertex;
         }
@@ -111,10 +108,37 @@ public class Vertex {
 
     public static Vertex getVertexAndAddToScope(Graph g, HashSet<Vertex> scope, Object object) {
         Vertex v = getVertexFromObject(g, object);
-        if (v != null) {
+        if (v != null && scope != null) {
             scope.add(v);
         }
         return v;
+    }
+
+    public static Vertex getLastSegVertex(Graph g, HashSet<Vertex> scope, String packageName) {
+        if (packageName == null || packageName.length() == 0) {
+            return g.v_root;
+        }
+        if (g.lastSegVertexOfPackage.containsKey(packageName)) {
+            return g.lastSegVertexOfPackage.get(packageName);
+        }
+
+        String lastSegStr, prevSegsStr;
+        int lastDot = packageName.lastIndexOf('.');
+        if (lastDot < 0) {
+            lastSegStr = packageName;
+            prevSegsStr = null;
+        } else {
+            lastSegStr = packageName.substring(lastDot + 1);
+            prevSegsStr = packageName.substring(0, lastDot);
+        }
+
+        PackageSeg lastSeg = new PackageSeg(packageName, lastSegStr);
+        Vertex v_lastSeg = Vertex.getVertexAndAddToScope(g, scope, lastSeg);
+        Vertex v_prevSeg = getLastSegVertex(g, scope, prevSegsStr);
+        new Edge(g, Edge.TYPE_PACKAGE_JOINT, v_lastSeg, v_prevSeg);
+        g.lastSegVertexOfPackage.put(packageName, v_lastSeg);
+
+        return v_lastSeg;
     }
 
     public String toString() {
@@ -141,24 +165,11 @@ public class Vertex {
         return vertexMap;
     }
 
-    public void restoreName(String name) {
-        if (!name.endsWith(">"))
-            name += "_predict";
-        if (this.content instanceof SootClass) {
-            SootClass cls = (SootClass) this.content;
-            cls.setName(cls.getPackageName() + "." + name);
-        }
-        else if (this.content instanceof SootMethod) {
-            SootMethod method = (SootMethod) this.content;
-            method.setName(name);
-        }
-        else if (this.content instanceof SootField) {
-            SootField field = (SootField) this.content;
-            field.setName(name);
-        }
-        else {
-            String message = "unknown vertex type:" + this.content.getClass().toString();
-            Util.LOGGER.warning(message);
-        }
+    public String getPredictedName() {
+        return predictedName;
+    }
+
+    public void setPredictedName(String predictedName) {
+        this.predictedName = predictedName;
     }
 }

@@ -10,6 +10,7 @@ import soot.SootMethod;
 
 public class Util {
     public static final Logger LOGGER = Logger.getLogger("UnuglifyDEX");
+    public static final String UNKNOWN = "<unknown>";
 
     public static String getTimeString() {
         long timeMillis = System.currentTimeMillis();

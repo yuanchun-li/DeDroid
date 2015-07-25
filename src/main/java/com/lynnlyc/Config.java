@@ -4,6 +4,7 @@ package com.lynnlyc;
  * Created by LiYC on 2015/7/18.
  * Package: UnuglifyDEX
  */
+import soot.Scene;
 import soot.options.Options;
 
 import javax.swing.text.html.Option;
@@ -189,6 +190,8 @@ public class Config {
         if (!("".equals(Config.forceAndroidJarPath)))
             Options.v().set_force_android_jar(Config.forceAndroidJarPath);
 
+
+        Scene.v().loadNecessaryClasses();
         Config.isInitialized = true;
         Util.LOGGER.info("initialization finished...");
     }

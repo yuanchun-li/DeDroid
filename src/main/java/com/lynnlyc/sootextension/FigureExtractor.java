@@ -1,12 +1,13 @@
-package com.lynnlyc;
+package com.lynnlyc.sootextension;
 
+import com.lynnlyc.Config;
+import com.lynnlyc.Util;
 import com.lynnlyc.graph.Edge;
 import com.lynnlyc.graph.Graph;
 import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.jimple.FieldRef;
 import soot.jimple.InvokeExpr;
-import soot.options.Options;
 
 import java.io.PrintStream;
 import java.util.HashSet;
@@ -15,76 +16,9 @@ import java.util.HashSet;
  * Created by LiYC on 2015/7/19.
  * Package: UnuglifyDEX
  */
-public class SootAnalysis {
+public class FigureExtractor {
 
-    public SootAnalysis() {
-        Scene.v().loadNecessaryClasses();
-    }
-
-    public void dump(PrintStream os) {
-        os.println("===Application Classes===");
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
-            os.println("---class info---");
-            os.println(cls);
-            os.println("getPackageName" + ":" + cls.getPackageName());
-            os.println("getJavaPackageName:" + ":" + cls.getJavaPackageName());
-            os.println("getName" + ":" + cls.getName());
-            os.println("getModifiers" + ":" + cls.getModifiers());
-            os.println("getSuperclass" + ":" + cls.getSuperclass());
-
-            os.println("--fields--");
-            for (SootField f : cls.getFields()) {
-                os.println("-field info-");
-                os.println(f);
-                os.println("getDeclaration" + ":" + f.getDeclaration());
-                os.println("getDeclaringClass" + ":" + f.getDeclaringClass());
-                os.println("getName" + ":" + f.getName());
-                os.println("getModifiers" + ":" + f.getModifiers());
-                os.println("getNumber" + ":" + f.getNumber());
-                os.println("getSignature" + ":" + f.getSignature());
-                os.println("getType" + ":" + f.getType());
-                os.println("getSubSignature" + ":" + f.getSubSignature());
-                os.println("-end of field info-");
-
-            }
-            os.println("--methods--");
-            for (SootMethod m : cls.getMethods()) {
-                os.println("-method info-");
-                os.println(m);
-                os.println("getDeclaration" + ":" + m.getDeclaration());
-                os.println("getDeclaringClass" + ":" + m.getDeclaringClass());
-                os.println("getName" + ":" + m.getName());
-                os.println("getModifiers" + ":" + m.getModifiers());
-                os.println("getBytecodeParms" + ":" + m.getBytecodeParms());
-                os.println("getBytecodeSignature" + ":" + m.getBytecodeSignature());
-                os.println("getSignature" + ":" + m.getSignature());
-                os.println("getParameterTypes" + ":" + m.getParameterTypes());
-                os.println("getExceptions" + ":" + m.getExceptions());
-
-                os.println("method body:");
-                Body b = m.retrieveActiveBody();
-                os.println(b);
-                os.println("-end of method info-");
-            }
-            os.println("---end of class info---");
-        }
-        os.println("===end of Application Classes===");
-    }
-
-    public void lightDump(PrintStream os) {
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
-            os.println("[class]");
-            os.println(cls);
-
-            os.println("\t[fields]");
-            for (SootField f : cls.getFields()) {
-                os.println("\t" + f);
-            }
-            os.println("\t[methods]");
-            for (SootMethod m : cls.getMethods()) {
-                os.println("\t" + m);
-            }
-        }
+    public FigureExtractor() {
     }
 
     public Graph run() {
@@ -96,44 +30,15 @@ public class SootAnalysis {
 //        PackManager.v().runPacks();
         Graph g = new Graph();
         HashSet<Vertex> globalScope = g.getNewScope();
-        Vertex v_root = Vertex.getRootVertex(g, globalScope);
-
-        HashSet<String> detectedPackages = new HashSet<>();
-        HashSet<String> detectedPackageJoints = new HashSet<>();
 
         Util.LOGGER.info("generating graph");
         for (SootClass cls : Scene.v().getApplicationClasses()) {
             Vertex v_cls = Vertex.getVertexAndAddToScope(g, globalScope, cls);
-            String package_name = cls.getPackageName();
 
-            if (package_name != null && !"".equals(package_name)) {
-                String[] package_segs = package_name.split("\\.");
-                String last_seg;
-                last_seg = package_segs[package_segs.length - 1];
-
-                // add package_joint edges
-                if (!detectedPackages.contains(package_name)) {
-                    Vertex v_prev_seg = v_root;
-                    for (String package_seg : package_segs) {
-                        String package_joint = package_seg + "." + v_prev_seg.content;
-                        Vertex v_seg = Vertex.getVertexAndAddToScope(
-                                g, globalScope, package_seg);
-                        if (!detectedPackageJoints.contains(package_joint)) {
-                            new Edge(g, Edge.TYPE_PACKAGE_JOINT, v_seg, v_prev_seg);
-                            detectedPackageJoints.add(package_joint);
-                        }
-                        v_prev_seg = v_seg;
-                    }
-                    detectedPackages.add(package_name);
-                }
-
-                // add belong to package edges
-                Vertex v_last_seg = Vertex.getVertexAndAddToScope(
-                        g, globalScope, last_seg);
-                new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls, v_last_seg);
-            } else {
-                new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls, v_root);
-            }
+            // add belong to package edges
+            // add package_joint edges (inside this call)
+            new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls,
+                    Vertex.getLastSegVertex(g, globalScope, cls.getPackageName()));
 
             // add INHERIT edges
             SootClass super_cls = cls.getSuperclass();
@@ -231,9 +136,5 @@ public class SootAnalysis {
         }
         Util.LOGGER.info("finished extracting features");
         return g;
-    }
-
-    public void output() {
-        PackManager.v().writeOutput();
     }
 }
