@@ -20,6 +20,7 @@ import java.util.HashSet;
 public class FigureExtractor {
 
     public FigureExtractor() {
+        ObfuscationDetector.v();
     }
 
     public Graph run() {
@@ -34,7 +35,7 @@ public class FigureExtractor {
 
         Util.LOGGER.info("generating graph");
         for (SootClass cls : Scene.v().getApplicationClasses()) {
-            if (Config.isTraining && ObfuscationDetector.isClassObfuscated(cls))
+            if (Config.isTraining && ObfuscationDetector.v().isObfuscated(cls))
                 continue;
 
             Vertex v_cls = Vertex.getVertexAndAddToScope(g, globalScope, cls);

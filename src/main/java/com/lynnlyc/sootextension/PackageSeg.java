@@ -1,10 +1,5 @@
 package com.lynnlyc.sootextension;
 
-import com.lynnlyc.graph.Vertex;
-import org.apache.commons.lang.StringUtils;
-
-import java.util.HashMap;
-
 /**
  * Created by LiYC on 2015/7/25.
  * Package: com.lynnlyc.sootextension

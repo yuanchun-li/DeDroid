@@ -30,7 +30,7 @@ public class Vertex {
         this.name = name;
         this.isKnown = isKnown;
         this.id = count;
-        this.predictedName = this.isKnown? name : Util.UNKNOWN;
+        this.predictedName = name;
         count++;
         g.vertexMap.put(content, this);
     }
@@ -46,7 +46,7 @@ public class Vertex {
             return VertexMap.get(object);
         }
 
-        if (Config.isTraining && ObfuscationDetector.isObfuscated(object))
+        if (Config.isTraining && ObfuscationDetector.v().isObfuscated(object))
             return null;
 
         if (object instanceof SootClass) {

@@ -84,7 +84,7 @@ public class Predictor {
             File reportFile = new File(Config.outputDirPath + "/report.txt");
             FileWriter reportFileWriter = new FileWriter(reportFile);
 
-            Integer infCorrectNum = 0, allCorrectNum = 0, infNum = 0;
+            Integer infSameNum = 0, allSameNum = 0, infNum = 0;
             Integer allNum = origin.length();
 
             // Prepare the array for evaluation
@@ -121,12 +121,12 @@ public class Predictor {
             // Evaluate and output
             for (int i = 0; i < allNum; i++){
                 if (resultList[i] == null){
-                    allCorrectNum++;
+                    allSameNum++;
                 } else {
                     infNum++;
                     if (resultList[i].equals(originList[i])){
-                        infCorrectNum++;
-                        allCorrectNum++;
+                        infSameNum++;
+                        allSameNum++;
                     }
                     String reportStr = originList[i] + " -> " + resultList[i];
                     reportFileWriter.write(reportStr + "\n");
@@ -134,12 +134,12 @@ public class Predictor {
             }
             reportFileWriter.close();
 
-            double errorRate = (double)(infNum - infCorrectNum) / (double)infNum;
+            double errorRate = (double)(infNum - infSameNum) / (double)infNum;
 
             Util.LOGGER.info("evaluation finished.");
             Util.LOGGER.info(infNum + " inf's in total with "
-                             + (infNum - infCorrectNum) + " wrong labels. ");
-            Util.LOGGER.info("error rate " + errorRate);
+                             + (infNum - infSameNum) + " different labels. ");
+            Util.LOGGER.info("diff rate " + errorRate);
 
         } catch (IOException e) {
             Util.LOGGER.warning("exception happened during evaluation");
@@ -174,7 +174,7 @@ public class Predictor {
      */
     public static void transform(Graph g) {
         for (Vertex v : g.vertexMap.values()) {
-            if (!v.isKnown && !ObfuscationDetector.isObfuscated(v.content))
+            if (!v.isKnown && !ObfuscationDetector.v().isObfuscated(v.content))
                 v.isKnown = true;
         }
     }

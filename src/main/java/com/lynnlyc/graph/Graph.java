@@ -172,7 +172,7 @@ public class Graph {
     public String getPredictedClassName(SootClass cls) {
         if (cls == null)
             return null;
-        if (!vertexMap.containsKey(cls))
+        if (!vertexMap.containsKey(cls) || !cls.isApplicationClass())
             return cls.getName();
         String predictedShortName = vertexMap.get(cls).getPredictedName();
         String predictedPackageName = getPredictedPackageName(cls.getPackageName());

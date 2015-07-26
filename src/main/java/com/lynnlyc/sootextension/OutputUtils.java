@@ -2,7 +2,6 @@ package com.lynnlyc.sootextension;
 
 import com.lynnlyc.Util;
 import com.lynnlyc.graph.Graph;
-import org.apache.commons.lang.StringUtils;
 import soot.*;
 import sun.nio.cs.ArrayDecoder;
 

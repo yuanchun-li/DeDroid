@@ -33,4 +33,9 @@ public class Util {
 		e.printStackTrace(new PrintWriter(sw));
 		Util.LOGGER.warning(sw.toString());
 	}
+
+    public static float safeDivide(int obfuscated, int total) {
+        if (total <= 0) return 1;
+        return (float) obfuscated / total;
+    }
 }
