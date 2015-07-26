@@ -45,11 +45,19 @@ public class FigureExtractor {
                     Vertex.getLastSegVertex(g, globalScope, cls.getPackageName()));
 
             // add INHERIT edges
-            SootClass super_cls = cls.getSuperclass();
-            if (super_cls != null) {
+            if (cls.hasSuperclass()) {
+                SootClass super_cls = cls.getSuperclass();
                 Vertex v_super_cls = Vertex.getVertexAndAddToScope(
                         g, globalScope, super_cls);
                 new Edge(g, Edge.TYPE_INHERIT, v_cls, v_super_cls);
+            }
+
+            // add OUTER edges
+            if (cls.hasOuterClass()) {
+                SootClass outer_cls = cls.getOuterClass();
+                Vertex v_outer_cls = Vertex.getVertexAndAddToScope(
+                        g, globalScope, outer_cls);
+                new Edge(g, Edge.TYPE_OUTER, v_cls, v_outer_cls);
             }
 
             // add implement edges

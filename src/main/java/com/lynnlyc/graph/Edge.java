@@ -14,6 +14,7 @@ public class Edge {
     public Vertex target;
 
     public static final String TYPE_INHERIT = "inherit";
+    public static final String TYPE_OUTER = "outer";
     public static final String TYPE_IMPLEMENT = "implement";
     public static final String TYPE_FIELD = "field";
     public static final String TYPE_METHOD = "method";

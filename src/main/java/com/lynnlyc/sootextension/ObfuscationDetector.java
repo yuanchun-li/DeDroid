@@ -19,6 +19,7 @@ import java.util.HashMap;
 public class ObfuscationDetector {
     private static ObfuscationDetector obfuscateDetector;
     private HashMap<SootClass, Float> classObfuscationRates;
+    private HashMap<String, Float> packageObfuscationRates;
     private float obfuscationRate;
     private ObfuscationDetector() {
         Util.LOGGER.info("measuring obfuscation rates");
@@ -53,7 +54,9 @@ public class ObfuscationDetector {
 
     private boolean isClassObfuscated(SootClass cls) {
         if (Config.isTraining) {
-            return cls.isApplicationClass() && classObfuscationRates.get(cls) > OBFUSCATE_THRESHOLD;
+            return cls.isApplicationClass() &&
+                    (packageObfuscationRates.get(cls.getPackageName()) > OBFUSCATE_THRESHOLD ||
+                            classObfuscationRates.get(cls) > OBFUSCATE_THRESHOLD);
         }
         return cls.isApplicationClass() && isNameObfuscated(cls.getShortName());
     }
@@ -72,19 +75,29 @@ public class ObfuscationDetector {
         return isNameObfuscated(method.getName());
     }
 
-    private static final String excludedNames = "os;tv;up;go;it;do;io;id;of;op;on;or;uk;";
+    private static final String excludedNames = "os;tv;up;go;it;do;io;id;of;op;on;or;uk;ui;";
 
     private boolean isNameObfuscated(String name) {
         if (name == null) return true;
         name = name.split("\\$")[0].toLowerCase();
-        return name.length() <= 2 && !excludedNames.contains(name);
+        return name.length() < 2 || (name.length() == 2 && !excludedNames.contains(name));
     }
 
     private static final float OBFUSCATE_THRESHOLD = (float) 0.1;
     private void getObfuscationRates() {
         classObfuscationRates = new HashMap<>();
+        packageObfuscationRates = new HashMap<>();
+        HashMap<String, Integer> packageClassTotalMap = new HashMap<>();
+        HashMap<String, Integer> packageClassObfuscatedMap = new HashMap<>();
+
         int totalClass = 0, obfuscatedClass = 0;
         for (SootClass cls : Scene.v().getApplicationClasses()) {
+            String packageName = cls.getPackageName();
+            int packageClassTotal = 0, packageClassObfuscated = 0;
+            if (packageClassTotalMap.containsKey(packageName)) {
+                packageClassTotal = packageClassTotalMap.get(packageName);
+                packageClassObfuscated = packageClassObfuscatedMap.get(packageName);
+            }
             int total = 0, obfuscated = 0;
             for (SootField f : cls.getFields()) {
                 total++;
@@ -98,15 +111,33 @@ public class ObfuscationDetector {
             classObfuscationRates.put(cls, rate);
 
             totalClass++;
-            if (rate > OBFUSCATE_THRESHOLD) obfuscatedClass++;
+            packageClassTotal++;
+            if (rate > OBFUSCATE_THRESHOLD) {
+                obfuscatedClass++;
+                packageClassObfuscated++;
+            }
+            packageClassTotalMap.put(packageName, packageClassTotal);
+            packageClassObfuscatedMap.put(packageName, packageClassObfuscated);
         }
         obfuscationRate = Util.safeDivide(obfuscatedClass, totalClass);
+
+        for (String packageName : packageClassTotalMap.keySet()) {
+            float packageObfuscationRate = Util.safeDivide(
+                    packageClassObfuscatedMap.get(packageName),
+                    packageClassTotalMap.get(packageName));
+            packageObfuscationRates.put(packageName, packageObfuscationRate);
+        }
     }
 
     public void dump(PrintStream ps) {
+        ps.println("packages:");
+        for (String packageName : packageObfuscationRates.keySet()) {
+            ps.println(String.format("%s -- %f", packageName, packageObfuscationRates.get(packageName)));
+        }
+        ps.println("\nclasses:");
         for (SootClass cls : classObfuscationRates.keySet()) {
             ps.println(String.format("%s -- %f", cls, classObfuscationRates.get(cls)));
         }
-        ps.println(String.format("Overall: %f", obfuscationRate));
+        ps.println(String.format("\nOverall: %f", obfuscationRate));
     }
 }
