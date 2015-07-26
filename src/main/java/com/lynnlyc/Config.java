@@ -39,8 +39,6 @@ public class Config {
     // The predictor needs an apk as input
     // File path of apk
     // public static String appFilePath = "";
-    // TODO Currently we only predict .java files, add .dex predicting
-    // TODO currently we only train .java files, add .jar training
     public static String codeDir = "";
 
     // Directory for result output

@@ -10,6 +10,6 @@ import java.io.File;
  */
 public class Trainer {
     public static void train(Graph g) {
-        // TODO use the generated data to train
+        // use the generated data to train
     }
 }
