@@ -1,9 +1,7 @@
 package com.lynnlyc.sootextension;
 
-import com.lynnlyc.Util;
 import com.lynnlyc.graph.Graph;
 import soot.*;
-import sun.nio.cs.ArrayDecoder;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

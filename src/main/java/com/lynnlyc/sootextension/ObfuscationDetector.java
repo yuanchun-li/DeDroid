@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Created by LiYC on 2015/7/25.
@@ -78,7 +77,7 @@ public class ObfuscationDetector {
     private boolean isNameObfuscated(String name) {
         if (name == null) return true;
         for(String seg : name.split("\\$")) {
-            if (name.length() <= 2 && !excludedNames.contains(name))
+            if (seg.length() <= 2 && !excludedNames.contains(seg))
                 return true;
         }
         return false;

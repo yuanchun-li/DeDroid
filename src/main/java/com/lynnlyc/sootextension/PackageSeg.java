@@ -32,8 +32,4 @@ public class PackageSeg {
     public String getSegName() {
         return this.segName;
     }
-
-    public void setSegName(String segName) {
-        this.segName = segName;
-    }
 }

@@ -6,7 +6,6 @@ import com.lynnlyc.sootextension.ObfuscationDetector;
 import com.lynnlyc.sootextension.PackageSeg;
 import org.json.JSONObject;
 import soot.*;
-import soot.tagkit.CodeAttribute;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,11 +32,6 @@ public class Vertex {
         this.predictedName = name;
         count++;
         g.vertexMap.put(content, this);
-    }
-
-    public static Vertex getRootVertexAndAddToScope(Graph g, HashSet<Vertex> scope) {
-        scope.add(g.v_root);
-        return g.v_root;
     }
 
     public static Vertex getVertexFromObject(Graph g, Object object) {

@@ -2,10 +2,6 @@ package com.lynnlyc;
 
 import com.lynnlyc.graph.Graph;
 import com.lynnlyc.sootextension.FigureExtractor;
-import com.lynnlyc.sootextension.ObfuscationDetector;
-import com.lynnlyc.sootextension.OutputUtils;
-
-import java.io.PrintStream;
 
 public class Main {
     //TODO 1: check overrides when restoring vertexes;
@@ -17,7 +13,7 @@ public class Main {
 
     public static void main(String[] args) {
 	// write your code here
-        PrintStream os = System.out;
+//        PrintStream os = System.out;
 
         if (!Config.parseArgs(args)) {
             Util.printUsage();

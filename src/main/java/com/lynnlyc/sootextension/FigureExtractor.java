@@ -9,8 +9,6 @@ import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.jimple.FieldRef;
 import soot.jimple.InvokeExpr;
-
-import java.io.PrintStream;
 import java.util.HashSet;
 
 /**
@@ -32,6 +30,7 @@ public class FigureExtractor {
 //        PackManager.v().runPacks();
         Graph g = new Graph();
         HashSet<Vertex> globalScope = g.getNewScope();
+        globalScope.add(g.v_root);
 
         Util.LOGGER.info("generating graph");
         for (SootClass cls : Scene.v().getApplicationClasses()) {

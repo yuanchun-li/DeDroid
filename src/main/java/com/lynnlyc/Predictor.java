@@ -8,7 +8,6 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2Session;
 import com.thetransactioncompany.jsonrpc2.client.JSONRPC2SessionException;
-//import net.sf.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -170,7 +169,7 @@ public class Predictor {
     /**
      * transform the graph
      * convert `well-named` inf vertexes to giv
-     * @param g
+     * @param g: the original graph generate during feature extraction
      */
     public static void transform(Graph g) {
         for (Vertex v : g.vertexMap.values()) {

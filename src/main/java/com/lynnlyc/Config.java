@@ -7,10 +7,8 @@ package com.lynnlyc;
 import soot.Scene;
 import soot.options.Options;
 
-import javax.swing.text.html.Option;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -47,10 +45,6 @@ public class Config {
 
     public static boolean isInitialized = false;
 
-    // printer of output
-    private static File logFile;
-    private static PrintStream logPs;
-    private static File resultFile;
     private static PrintStream resultPs;
 
     public static boolean parseArgs(String[] args) {
@@ -107,8 +101,8 @@ public class Config {
             System.out.println("Error generating output directory.");
             return false;
         }
-        logFile = new File(String.format("%s/%s.log", Config.outputDirPath, mode));
-        resultFile = new File(String.format("%s/%s.json", Config.outputDirPath, mode));
+        File logFile = new File(String.format("%s/%s.log", Config.outputDirPath, mode));
+        File resultFile = new File(String.format("%s/%s.json", Config.outputDirPath, mode));
 
         if (!"".equals(Config.librariesDir)){
             File lib = new File(Config.librariesDir);
@@ -123,7 +117,6 @@ public class Config {
         }
 
         try {
-            logPs = new PrintStream(new FileOutputStream(logFile));
             FileHandler fh = new FileHandler(logFile.getAbsolutePath());
             fh.setFormatter(new SimpleFormatter());
             Util.LOGGER.addHandler(fh);
@@ -200,17 +193,5 @@ public class Config {
             return System.out;
         }
         return resultPs;
-    }
-
-    public static PrintStream getLogPs() {
-        if (logPs == null) {
-            Util.LOGGER.warning("log printer is null, use stdout instead.");
-            return System.out;
-        }
-        return logPs;
-    }
-
-    public static File getResultFile() {
-        return resultFile;
     }
 }
