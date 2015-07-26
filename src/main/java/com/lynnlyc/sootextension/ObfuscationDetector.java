@@ -72,15 +72,12 @@ public class ObfuscationDetector {
         return isNameObfuscated(method.getName());
     }
 
-    private static final String excludedNames = "os;tv;up;go;it;do;io;id;of;op;on;or;";
+    private static final String excludedNames = "os;tv;up;go;it;do;io;id;of;op;on;or;uk;";
 
     private boolean isNameObfuscated(String name) {
         if (name == null) return true;
-        for(String seg : name.split("\\$")) {
-            if (seg.length() <= 2 && !excludedNames.contains(seg))
-                return true;
-        }
-        return false;
+        name = name.split("\\$")[0].toLowerCase();
+        return name.length() <= 2 && !excludedNames.contains(name);
     }
 
     private static final float OBFUSCATE_THRESHOLD = (float) 0.1;
