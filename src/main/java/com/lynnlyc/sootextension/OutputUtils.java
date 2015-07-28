@@ -164,9 +164,7 @@ public class OutputUtils {
         public String toString() {
             String retStr = String.format("%s -> %s",
                     predictedClassName, originClassName);
-            if (fieldMappingSlots.isEmpty() && methodMappingSlots.isEmpty())
-                retStr += "\n";
-            else retStr += ":\n";
+            retStr += ":\n";
             for (FieldMappingSlot fieldMappingSlot : fieldMappingSlots) {
                 retStr += String.format("\t%s\n", fieldMappingSlot.toString());
             }
