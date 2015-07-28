@@ -121,6 +121,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	TP = 0
 	correctTP = 0
 	reportFile = open('report.txt', 'w')
+	correctItemsFile = open('correct.txt', 'w')
 
 	for line in linesPredict:
 		if line[0] == '\t' or line[0] == ' ':
@@ -150,13 +151,16 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 						# we got the right type, but not necessary
 						TP += 1
 						correctType = mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated].keys()[0]
-						reportFile.write(correctType + ' ' + 
+						reportFile.write('\t' + correctType + ' ' + 
 										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] + 
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						# non-dicted type that can be retrieved OR obfuscated dicted type
 						if mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] == patternList[1]:
 							# the same identifier
 							correctTP += 1
+							correctItemsFile.write('\t' + correctType + ' ' + 
+										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] + 
+										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						else:
 							# wrong identifier
 							continue
@@ -168,8 +172,8 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				# is a function
 				patternList = re_func.match(origin).groups()
 				# whether return type is obfuscated
-				retKey = dictClassPre[patternList[0]] if dictClassPre.has_key(patternList[0]) else patternList[0]
 				#retType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
+				retKey = dictClassPre[patternList[0]] if dictClassPre.has_key(patternList[0]) else patternList[0]
 				retType = dictClassPro[retKey] if dictClassPro.has_key(retKey) else retKey
 
 				idType = retType + '('
@@ -193,13 +197,16 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					if mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated].has_key(idType):
 						# we got the right type, but not necessary
 						TP += 1
-						reportFile.write(idType + ' ' + 
+						reportFile.write('\t' + idType + ' ' + 
 										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] + 
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						# non-dicted type that can be retrieved OR obfuscated dicted type
 						if mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] == patternList[1]:
 							# the same identifier
 							correctTP += 1
+							correctItemsFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] + 
+										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						else:
 							# wrong identifier
 							continue
@@ -219,6 +226,8 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					# class name correct
 					correctTP += 1
 					reportFile.write(currClassImg + ' -> ' + currClass 
+									 + ' -> ' + currClassImg + '\n')
+					correctItemsFile.write(currClassImg + ' -> ' + currClass 
 									 + ' -> ' + currClassImg + '\n')
 				else:
 					correctClass = mapClassToPatternBlock[currClass].keys()[0]
