@@ -225,7 +225,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				continue
 			else:
 				TP += 1
-				if mapClassToPatternBlock[currClass].has_key(currClassImg):
+				if mapClassToPatternBlock[currClass].has_key(currClassImg) == True:
 					# class name correct
 					correctTP += 1
 					reportFile.write(currClassImg + ' -> ' + currClass 
@@ -242,7 +242,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	reportFile.close()
 	print 'TP: ' + str(TP)
 	print 'correctTP: ' + str(correctTP)
-	print 'presition: ' + str(float(TP) / float(predictLen))
+	print 'precision: ' + str(float(TP) / float(predictLen))
 	print 'recall: ' + str(float(TP) / float(proguardLen))
 	print 'predict correct rate: ' + str(float(correctTP) / float(TP))
 	# return dictProguard
