@@ -55,6 +55,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 			currClass = currClass[:-1]
 			# predict map: from predicted to obfuscated
 			dictClassPre[currClassImg] = currClass
+			#print currClass
 			#print currClass + ' <- ' + currClassImg
 
 	# step2: generate pattern strings for fields and functions in pro's and pre's
@@ -167,6 +168,8 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					else:
 						# Type re-generation failed. It should not be possible.
 						print 'Type re-generation failed: ' + line
+						#print 'Key: ' + fieldKey
+						#print 'PatternList[0]: ' + patternList[0]
 
 			else:			
 				# is a function
