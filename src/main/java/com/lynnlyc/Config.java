@@ -10,6 +10,8 @@ import soot.SootClass;
 import soot.options.Options;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,11 +22,12 @@ import java.util.logging.SimpleFormatter;
 
 public class Config {
     // nice2predict server url for predicting
-    public static final String serverUrl = "http://localhost:5745";
+    public static String serverUrl = "http://localhost:5745";
     public static final String projectName = "UnuglifyDEX";
 
     // Mode (training or predicting)
     public static boolean isTraining = false;
+    private static String mode = null;
 
     // File path of android.jar which is forced to use by soot
     public static String forceAndroidJarPath = "";
@@ -64,6 +67,8 @@ public class Config {
                 .longOpt("library").hasArg().desc("path to library dir").build();
         Option sdk = Option.builder("sdk").argName("android.jar").required()
                 .longOpt("android-sdk").hasArg().desc("path to android.jar").build();
+        Option server = Option.builder("server").argName("url").hasArg()
+                .desc("Nice2Predict server address, default http://localhost:5745").build();
 
         options.addOption(quiet);
         options.addOption(debug);
@@ -72,19 +77,58 @@ public class Config {
         options.addOption(input);
         options.addOption(library);
         options.addOption(sdk);
+        options.addOption(server);
 
         CommandLineParser parser = new DefaultParser();
 
         try {
             CommandLine cmd = parser.parse(options, args);
-            if (cmd.hasOption("i")) Config.codeDir = cmd.getOptionValue("i");
-            if (cmd.hasOption('o')) Config.outputDir = cmd.getOptionValue('o');
-            if (cmd.hasOption('l')) Config.librariesDir = cmd.getOptionValue('l');
-            if (cmd.hasOption("sdk"))
-                Config.forceAndroidJarPath = cmd.getOptionValue("sdk");
             if (cmd.hasOption("debug")) Util.LOGGER.setLevel(Level.ALL);
             if (cmd.hasOption("quiet")) Util.LOGGER.setLevel(Level.WARNING);
             if (cmd.hasOption("train")) Config.isTraining = true;
+            mode = Config.isTraining ? "train" : "predict";
+            if (cmd.hasOption("i")) {
+                Config.codeDir = cmd.getOptionValue("i");
+                File codeDirFile = new File(Config.codeDir);
+                if (!codeDirFile.exists()) {
+                    throw new ParseException("Input file does not exist.");
+                }
+            }
+            if (cmd.hasOption('o')) {
+                Config.outputDir = cmd.getOptionValue('o');
+                File workingDir = new File(String.format("%s/UnuglifyDex_%S_%s/",
+                        Config.outputDir, mode, Util.getTimeString()));
+
+                Config.outputDir = workingDir.getPath();
+                if (!workingDir.exists() && !workingDir.mkdirs()) {
+                    throw new ParseException("Error generating output directory.");
+                }
+            }
+            if (cmd.hasOption('l')) {
+                Config.librariesDir = cmd.getOptionValue('l');
+                File lib = new File(Config.librariesDir);
+                if (!lib.exists()) {
+                    throw new ParseException("Library does not exist.");
+                }
+                if (lib.isFile() && !lib.getName().endsWith(".jar")) {
+                    throw new ParseException("Library format error, should be directory or jar.");
+                }
+            }
+            if (cmd.hasOption("sdk")) {
+                Config.forceAndroidJarPath = cmd.getOptionValue("sdk");
+                File sdkFile = new File(Config.forceAndroidJarPath);
+                if (!sdkFile.exists()) {
+                    throw new ParseException("Android jar does not exist.");
+                }
+            }
+            if (cmd.hasOption("server")) {
+                Config.serverUrl = cmd.getOptionValue("server");
+                try {
+                    new URL(Config.serverUrl);
+                } catch (MalformedURLException e) {
+                    throw new ParseException("Server url error. " + e.getMessage());
+                }
+            }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             HelpFormatter formatter = new HelpFormatter();
@@ -97,37 +141,14 @@ public class Config {
             formatter.printHelp(Config.projectName, options, true);
             return false;
         }
+        return true;
+    }
 
-        String mode = Config.isTraining ? "train" : "predict";
+    public static void init() {
+        Util.LOGGER.log(Level.INFO, "initializing...");
 
-        File codeDirFile = new File(Config.codeDir);
-        if (!codeDirFile.exists()) {
-            System.out.println("Input file does not exist.");
-            return false;
-        }
-
-        File workingDir = new File(String.format("%s/UnuglifyDex_%S_%s/", Config.outputDir,
-                mode, Util.getTimeString()));
-
-        Config.outputDir = workingDir.getPath();
-        if (!workingDir.exists() && !workingDir.mkdirs()) {
-            System.out.println("Error generating output directory.");
-            return false;
-        }
         File logFile = new File(String.format("%s/%s.log", Config.outputDir, mode));
         File resultFile = new File(String.format("%s/%s.json", Config.outputDir, mode));
-
-        if (!"".equals(Config.librariesDir)){
-            File lib = new File(Config.librariesDir);
-            if (!lib.exists()) {
-                System.out.println("Library does not exist.");
-                return false;
-            }
-            if (lib.isFile() && !lib.getName().endsWith(".jar")) {
-                System.out.println("Library format error, should be directory or jar.");
-                return false;
-            }
-        }
 
         try {
             FileHandler fh = new FileHandler(logFile.getAbsolutePath());
@@ -136,15 +157,9 @@ public class Config {
             resultPs = new PrintStream(new FileOutputStream(resultFile));
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
         }
-        Util.LOGGER.info(String.format("[mode]%s, [input]%s, [output]%s",
-                mode, Config.codeDir, Config.outputDir));
-        return true;
-    }
 
-    public static void init() {
-        Util.LOGGER.log(Level.INFO, "initializing...");
+        Options.v().set_debug(false);
         Options.v().set_prepend_classpath(true);
         Options.v().set_allow_phantom_refs(true);
 //        Options.v().set_whole_program(true);
@@ -208,6 +223,8 @@ public class Config {
         });
 
         Util.LOGGER.info("initialization finished...");
+        Util.LOGGER.info(String.format("[mode]%s, [input]%s, [output]%s",
+                mode, Config.codeDir, Config.outputDir));
     }
 
     public static PrintStream getResultPs() {
