@@ -8,6 +8,8 @@ public class Main {
     //DONE 2: filter training data and predicting data
     //DONE 3: generate mapping
     //DOING 4: evaluate with open source apps:
+    // TODO: add more features (consider class annotations, method annotations, field reaching definitions etc)
+    // FIXME: some different fields and methods are predicted to same name
     // for each open-sourced app, generate a debug version,
     // a release version and the mapping.txt corresponding to the release version
 
