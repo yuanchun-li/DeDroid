@@ -29,6 +29,8 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	print str(proguardLen) + ' relevant items in Proguard.'
 	predictLen = len(linesPredict)
 	print str(predictLen) + ' relevant items in prediction.'
+	#proguardLen = 0
+	#predictLen = 0
 	
 	dictClassPro = {}
 	dictClassPre = {}
@@ -76,6 +78,11 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 			
 				# is a field
 				patternList = re_field.match(origin).groups()
+				# expel the same ones
+				if patternList[1] == obfuscated:
+				#	print patternList[1] + ' -> ' + obfuscated
+					proguardLen -= 1
+					continue;
 				# whether is a obfuscated type. type is in patternList[0]
 				idType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
 				
@@ -88,6 +95,11 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 			else:			
 				# is a function
 				patternList = re_func.match(origin).groups()
+				# expel the same ones
+				if patternList[1] == obfuscated:
+				#	print patternList[1] + ' -> ' + obfuscated
+					proguardLen -= 1
+					continue;
 				# whether return type is obfuscated
 				retType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
 
@@ -114,6 +126,17 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 			currClass = currClass[:-1]
 			mapClassToPatternBlock[currClass] = {currClassImg: {'field':{}, 'method':{}}}
 
+	# expel the same classes
+	for obfuscatedClass in mapClassToPatternBlock.keys():
+		originClass = mapClassToPatternBlock[obfuscatedClass].keys()[0]
+		if originClass == obfuscatedClass:
+			if len(mapClassToPatternBlock[obfuscatedClass][originClass]['field']) == 0:
+				if len(mapClassToPatternBlock[obfuscatedClass][originClass]['method']) == 0:
+					#print obfuscatedClass
+					proguardLen -= 1
+					mapClassToPatternBlock.pop(obfuscatedClass)
+
+
 	dictDebug = open('dict.txt', 'w')
 	dictDebug.write(str(mapClassToPatternBlock))
 	dictDebug.close()
@@ -126,6 +149,9 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 
 	for line in linesPredict:
 		if line[0] == '\t' or line[0] == ' ':
+			# skip cleared classes
+			if mapClassToPatternBlock.has_key(currClass) == False:
+				continue
 			# clear blank
 			if line[0] == '\t':
 				[origin, obfuscated] = line[1:].split(' -> ')
