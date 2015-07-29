@@ -9,6 +9,8 @@ import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.jimple.FieldRef;
 import soot.jimple.InvokeExpr;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -29,7 +31,7 @@ public class FigureExtractor {
         }
 //        PackManager.v().runPacks();
         Graph g = new Graph();
-        HashSet<Vertex> globalScope = g.getNewScope();
+        ArrayList<Vertex> globalScope = g.getNewScope();
         globalScope.add(g.v_root);
 
         Util.LOGGER.info("generating graph");
@@ -74,7 +76,7 @@ public class FigureExtractor {
             new Edge(g, Edge.TYPE_MODIFIER, v_cls, v_cls_modifier);
 
             // Consider the scope inside the class
-            HashSet<Vertex> classScope = g.getNewScope();
+            ArrayList<Vertex> classScope = g.getNewScope();
             classScope.add(v_cls);
             // for each field
             for (SootField field : cls.getFields()) {
@@ -126,7 +128,7 @@ public class FigureExtractor {
                 // consider the scope inside a method
                 if (method.getSource() == null) continue;
                 try {
-                    HashSet<Vertex> methodScope = g.getNewScope();
+                    ArrayList<Vertex> methodScope = g.getNewScope();
                     methodScope.add(v_method);
                     Body body = method.retrieveActiveBody();
                     for (ValueBox valueBox : body.getUseAndDefBoxes()) {
