@@ -16,7 +16,6 @@ public class Main {
 //        PrintStream os = System.out;
 
         if (!Config.parseArgs(args)) {
-            Util.printUsage();
             return;
         }
 

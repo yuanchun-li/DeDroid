@@ -16,18 +16,6 @@ public class Util {
         return sdf.format(date);
     }
 
-    public static void printUsage() {
-        String usage = "Usage: java Main [options]\n" +
-                "\t-i\tinput directory\n" +
-                "\t-o\toutput directory\n" +
-                "\t-m\tmode, train or predict\n" +
-                "\t-l\tlibraies directory\n" +
-                "\t-android-jars\tpath to sdk platforms\n" +
-                "\t-force-android-jar\tpath to android.jar\n" +
-                "\texample: java Main -i examples/train -o output -android-jars path/to/sdk/platforms\n";
-        System.out.println(usage);
-    }
-
 	public static void logException(Exception e) {
 		StringWriter sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw));

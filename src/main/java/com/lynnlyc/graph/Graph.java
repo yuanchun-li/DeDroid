@@ -52,7 +52,7 @@ public class Graph {
         JSONArray query = new JSONArray();
         JSONArray assign = new JSONArray();
         for (Edge e : edges) {
-            query.put(e.toJson());
+             query.put(e.toJson());
         }
         for (HashSet<Vertex> scope : scopes) {
             query.put(scope2Json(scope));

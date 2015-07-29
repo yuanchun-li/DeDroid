@@ -33,7 +33,7 @@ public class FigureExtractor {
         globalScope.add(g.v_root);
 
         Util.LOGGER.info("generating graph");
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
+        for (SootClass cls : Config.applicationClasses) {
             if (Config.isTraining && ObfuscationDetector.v().isObfuscated(cls))
                 continue;
 

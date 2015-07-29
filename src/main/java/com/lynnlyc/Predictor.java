@@ -48,7 +48,7 @@ public class Predictor {
             if (response.indicatesSuccess()) {
                 Util.LOGGER.info("finished predicting");
                 String resultStr = response.getResult().toString();
-                File resultFile = new File(Config.outputDirPath + "/result.json");
+                File resultFile = new File(Config.outputDir + "/result.json");
                 FileWriter resultFileWriter = new FileWriter(resultFile);
                 resultFileWriter.write(resultStr);
                 resultFileWriter.close();
@@ -80,7 +80,7 @@ public class Predictor {
         Util.LOGGER.info("start evaluation");
 
         try {
-            File reportFile = new File(Config.outputDirPath + "/report.txt");
+            File reportFile = new File(Config.outputDir + "/report.txt");
             FileWriter reportFileWriter = new FileWriter(reportFile);
 
             Integer infSameNum = 0, allSameNum = 0, infNum = 0;
@@ -156,7 +156,7 @@ public class Predictor {
     public static void generateMapping(Graph g, JSONArray result) {
         Util.LOGGER.info("generating mapping.txt");
         g.restoreUnknownFromJson(result);
-        File reportFile = new File(Config.outputDirPath + "/mapping.txt");
+        File reportFile = new File(Config.outputDir + "/mapping.txt");
         try {
             PrintStream ps = new PrintStream(reportFile);
             OutputUtils.dumpMapping(g, ps);

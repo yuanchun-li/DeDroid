@@ -4,11 +4,15 @@ package com.lynnlyc;
  * Created by LiYC on 2015/7/18.
  * Package: UnuglifyDEX
  */
+import org.apache.commons.cli.*;
 import soot.Scene;
+import soot.SootClass;
 import soot.options.Options;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -17,12 +21,11 @@ import java.util.logging.SimpleFormatter;
 public class Config {
     // nice2predict server url for predicting
     public static final String serverUrl = "http://localhost:5745";
+    public static final String projectName = "UnuglifyDEX";
 
     // Mode (training or predicting)
     public static boolean isTraining = false;
 
-    // Directory path to find android.jar
-    public static String androidPlatformDir = "";
     // File path of android.jar which is forced to use by soot
     public static String forceAndroidJarPath = "";
     // Libraries' directory, to be added to soot classpath
@@ -41,51 +44,61 @@ public class Config {
 
     // Directory for result output
     // It should output a json format of training/predicting data
-    public static String outputDirPath = "output";
+    public static String outputDir = "output";
 
+    public static ArrayList<SootClass> applicationClasses;
     public static boolean isInitialized = false;
 
     private static PrintStream resultPs;
 
     public static boolean parseArgs(String[] args) {
-        int i;
-        if (args.length % 2 == 1)
+        org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
+        Option quiet = new Option("quiet", "be extra quiet");
+        Option debug = new Option("debug", "print debug information");
+        Option train = new Option("train", "run in training mode, default is predicting mode");
+        Option output = Option.builder("o").argName("directory").required()
+                .longOpt("output").hasArg().desc("path to output dir").build();
+        Option input = Option.builder("i").argName("directory").required()
+                .longOpt("input").hasArg().desc("path to target app").build();
+        Option library = Option.builder("l").argName("directory")
+                .longOpt("library").hasArg().desc("path to library dir").build();
+        Option sdk = Option.builder("sdk").argName("android.jar").required()
+                .longOpt("android-sdk").hasArg().desc("path to android.jar").build();
+
+        options.addOption(quiet);
+        options.addOption(debug);
+        options.addOption(train);
+        options.addOption(output);
+        options.addOption(input);
+        options.addOption(library);
+        options.addOption(sdk);
+
+        CommandLineParser parser = new DefaultParser();
+
+        try {
+            CommandLine cmd = parser.parse(options, args);
+            if (cmd.hasOption("i")) Config.codeDir = cmd.getOptionValue("i");
+            if (cmd.hasOption('o')) Config.outputDir = cmd.getOptionValue('o');
+            if (cmd.hasOption('l')) Config.librariesDir = cmd.getOptionValue('l');
+            if (cmd.hasOption("sdk"))
+                Config.forceAndroidJarPath = cmd.getOptionValue("sdk");
+            if (cmd.hasOption("debug")) Util.LOGGER.setLevel(Level.ALL);
+            if (cmd.hasOption("quiet")) Util.LOGGER.setLevel(Level.WARNING);
+            if (cmd.hasOption("train")) Config.isTraining = true;
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.setOptionComparator(new Comparator<Option>() {
+                @Override
+                public int compare(Option o1, Option o2) {
+                    return o1.getOpt().length() - o2.getOpt().length();
+                }
+            });
+            formatter.printHelp(Config.projectName, options, true);
             return false;
+        }
 
         String mode = Config.isTraining ? "train" : "predict";
-        for (i = 0; i < args.length; i += 2) {
-            String key = args[i];
-            String value = args[i+1];
-            switch (key) {
-                case "-i": Config.codeDir = value; break;
-                case "-o": Config.outputDirPath = value; break;
-                case "-l": Config.librariesDir = value; break;
-                case "-m": mode = value;
-                case "-android-jars": Config.androidPlatformDir = value; break;
-                case "-force-android-jar": Config.forceAndroidJarPath = value; break;
-                default: return false;
-            }
-        }
-
-//        if ("".equals(Config.androidPlatformDir) && "".equals(Config.forceAndroidJarPath)) {
-//            return false;
-//        }
-
-        if ("train".equals(mode)) {
-            Config.isTraining = true;
-        }
-        else if ("predict".equals(mode)) {
-            Config.isTraining = false;
-        }
-        else {
-            System.out.println("Unknown mode, should be train or predict.");
-            return false;
-        }
-
-        if ("".equals(Config.codeDir)) {
-            System.out.println("Input file cannot be empty.");
-            return false;
-        }
 
         File codeDirFile = new File(Config.codeDir);
         if (!codeDirFile.exists()) {
@@ -93,16 +106,16 @@ public class Config {
             return false;
         }
 
-        File workingDir = new File(String.format("%s/UnuglifyDex_%S_%s/", Config.outputDirPath,
+        File workingDir = new File(String.format("%s/UnuglifyDex_%S_%s/", Config.outputDir,
                 mode, Util.getTimeString()));
 
-        Config.outputDirPath = workingDir.getPath();
+        Config.outputDir = workingDir.getPath();
         if (!workingDir.exists() && !workingDir.mkdirs()) {
             System.out.println("Error generating output directory.");
             return false;
         }
-        File logFile = new File(String.format("%s/%s.log", Config.outputDirPath, mode));
-        File resultFile = new File(String.format("%s/%s.json", Config.outputDirPath, mode));
+        File logFile = new File(String.format("%s/%s.log", Config.outputDir, mode));
+        File resultFile = new File(String.format("%s/%s.json", Config.outputDir, mode));
 
         if (!"".equals(Config.librariesDir)){
             File lib = new File(Config.librariesDir);
@@ -126,7 +139,7 @@ public class Config {
             return false;
         }
         Util.LOGGER.info(String.format("[mode]%s, [input]%s, [output]%s",
-                mode, Config.codeDir, Config.outputDirPath));
+                mode, Config.codeDir, Config.outputDir));
         return true;
     }
 
@@ -136,7 +149,7 @@ public class Config {
         Options.v().set_allow_phantom_refs(true);
 //        Options.v().set_whole_program(true);
 //        Options.v().set_src_prec(Options.src_prec_apk);
-        Options.v().set_output_dir(Config.outputDirPath);
+        Options.v().set_output_dir(Config.outputDir);
 
         List<String> process_dirs = new ArrayList<>();
         process_dirs.add(Config.codeDir);
@@ -156,7 +169,7 @@ public class Config {
         }
 
         String classpath = "";
-        if (Config.librariesDir != null && !"".equals(Config.librariesDir)) {
+        if (Config.librariesDir != null && Config.librariesDir.length() != 0) {
             File lib = new File(Config.librariesDir);
             if (lib.isFile() && lib.getName().endsWith(".jar"))
                 classpath = lib.getAbsolutePath();
@@ -176,14 +189,24 @@ public class Config {
 //        Options.v().set_ast_metrics(true);
 //        Options.v().set_polyglot(true);
 
-        if (!("".equals(Config.androidPlatformDir)))
-            Options.v().set_android_jars(Config.androidPlatformDir);
-        if (!("".equals(Config.forceAndroidJarPath)))
-            Options.v().set_force_android_jar(Config.forceAndroidJarPath);
+        Options.v().set_force_android_jar(Config.forceAndroidJarPath);
 
 
         Scene.v().loadNecessaryClasses();
         Config.isInitialized = true;
+
+        applicationClasses = new ArrayList<>();
+        for (SootClass cls : Scene.v().getApplicationClasses()) {
+            applicationClasses.add(cls);
+        }
+        Collections.sort(applicationClasses, new Comparator<SootClass>() {
+            @Override
+            public int compare(SootClass o1, SootClass o2) {
+                return String.CASE_INSENSITIVE_ORDER.compare(
+                        o1.getName(), o2.getName());
+            }
+        });
+
         Util.LOGGER.info("initialization finished...");
     }
 

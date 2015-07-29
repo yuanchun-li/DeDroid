@@ -1,5 +1,6 @@
 package com.lynnlyc.sootextension;
 
+import com.lynnlyc.Config;
 import com.lynnlyc.graph.Graph;
 import soot.*;
 
@@ -16,7 +17,7 @@ import java.util.List;
 public class OutputUtils {
     public static void dumpInfo(PrintStream ps) {
         ps.println("===Application Classes===");
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
+        for (SootClass cls : Config.applicationClasses) {
             ps.println("---class info---");
             ps.println(cls);
             ps.println("getPackageName" + ":" + cls.getPackageName());
@@ -65,7 +66,7 @@ public class OutputUtils {
     }
 
     public static void lightDump(PrintStream ps) {
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
+        for (SootClass cls : Config.applicationClasses) {
             ps.println("[class]");
             ps.println(cls);
 
@@ -87,7 +88,7 @@ public class OutputUtils {
     public static void dumpMapping(Graph g, PrintStream ps) {
         ArrayList<ClassMappingSlot> classMappingSlots = new ArrayList<>();
 
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
+        for (SootClass cls : Config.applicationClasses) {
             String originClassName = cls.getName();
             String predictedClassName = g.getPredictedClassName(cls);
 

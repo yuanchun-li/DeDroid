@@ -2,7 +2,6 @@ package com.lynnlyc.sootextension;
 
 import com.lynnlyc.Config;
 import com.lynnlyc.Util;
-import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
@@ -24,7 +23,7 @@ public class ObfuscationDetector {
     private ObfuscationDetector() {
         Util.LOGGER.info("measuring obfuscation rates");
         getObfuscationRates();
-        File reportFile = new File(Config.outputDirPath + "/obfuscation_rates.txt");
+        File reportFile = new File(Config.outputDir + "/obfuscation_rates.txt");
         try {
             PrintStream ps = new PrintStream(reportFile);
             this.dump(ps);
@@ -91,7 +90,7 @@ public class ObfuscationDetector {
         HashMap<String, Integer> packageClassObfuscatedMap = new HashMap<>();
 
         int totalClass = 0, obfuscatedClass = 0;
-        for (SootClass cls : Scene.v().getApplicationClasses()) {
+        for (SootClass cls : Config.applicationClasses) {
             String packageName = cls.getPackageName();
             int packageClassTotal = 0, packageClassObfuscated = 0;
             if (packageClassTotalMap.containsKey(packageName)) {
