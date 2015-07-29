@@ -36,11 +36,7 @@ public class Edge {
     }
 
     public JSONObject toJson() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("a", source.id);
-        jsonObject.put("b", target.id);
-        jsonObject.put("f2", type);
-        return jsonObject;
+        return new JSONObject(this.toMap());
     }
 
     public HashMap<String, Object> toMap() {

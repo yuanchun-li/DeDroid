@@ -137,15 +137,15 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					mapClassToPatternBlock.pop(obfuscatedClass)
 
 
-	dictDebug = open('dict.txt', 'w')
+	dictDebug = open(report_path + '/dict.txt', 'w')
 	dictDebug.write(str(mapClassToPatternBlock))
 	dictDebug.close()
 
 	# step3: check the predict mapping
 	TP = 0
 	correctTP = 0
-	reportFile = open('report.txt', 'w')
-	correctItemsFile = open('correct.txt', 'w')
+	reportFile = open(report_path + '/report.txt', 'w')
+	correctItemsFile = open(report_path + '/correct.txt', 'w')
 
 	for line in linesPredict:
 		if line[0] == '\t' or line[0] == ' ':
@@ -280,11 +280,11 @@ def parse_args():
     generate options including input proguard-generated mappings and predict mappings
     """
 	parser = argparse.ArgumentParser(description="comparing proguard-generated and predict mappings")
-	parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir", nargs='?',
+	parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir",
 						required=True, help="directory of proguard-generated mappings file")
-	parser.add_argument("--predict", action="store", dest="predict_mappings_dir", nargs='?',
+	parser.add_argument("--predict", action="store", dest="predict_mappings_dir",
 						required=True, help="directory of predict mappings file")
-	parser.add_argument("-o", action="store", dest="report_path", nargs='?',
+	parser.add_argument("-o", action="store", dest="report_path",
 						required=True, help="directory of report file")
 
 	options = parser.parse_args()

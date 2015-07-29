@@ -23,7 +23,7 @@ public class Graph {
     public HashMap<Object, Vertex> vertexMap;
     public ArrayList<Edge> edges;
     public ArrayList<Vertex> vertexes;
-    public ArrayList<ArrayList<Vertex>> scopes;
+    public ArrayList<HashSet<Vertex>> scopes;
     public HashMap<String, Vertex> lastSegVertexOfPackage;
     public Vertex v_root;
 
@@ -38,8 +38,8 @@ public class Graph {
         v_root = new Vertex(this, rootSeg, rootSeg.getSegName(), true);
     }
 
-    public ArrayList<Vertex> getNewScope() {
-        ArrayList<Vertex> scope = new ArrayList<>();
+    public HashSet<Vertex> getNewScope() {
+        HashSet<Vertex> scope = new HashSet<>();
         scopes.add(scope);
         return scope;
     }
@@ -50,21 +50,7 @@ public class Graph {
     }
 
     public JSONObject toJson() {
-        JSONObject jsonObject = new JSONObject();
-        JSONArray query = new JSONArray();
-        JSONArray assign = new JSONArray();
-        for (Edge e : edges) {
-             query.put(e.toJson());
-        }
-        for (ArrayList<Vertex> scope : scopes) {
-            query.put(scope2Json(scope));
-        }
-        for (Vertex v : vertexes) {
-            assign.put(v.toJson());
-        }
-        jsonObject.put("query", query);
-        jsonObject.put("assign", assign);
-        return jsonObject;
+        return new JSONObject(this.toMap());
     }
 
     public Map<String, Object> toMap() {
@@ -74,7 +60,7 @@ public class Graph {
         for (Edge e : edges) {
             query.add(e.toMap());
         }
-        for (ArrayList<Vertex> scope : scopes) {
+        for (HashSet<Vertex> scope : scopes) {
             query.add(scope2Map(scope));
         }
         for (Vertex v : vertexes) {
@@ -85,21 +71,18 @@ public class Graph {
         return requestMap;
     }
 
-    public JSONObject scope2Json(ArrayList<Vertex> scope) {
-        JSONObject jsonObject = new JSONObject();
-        JSONArray jsonArray = new JSONArray();
-        for (Vertex v : scope) {
-            jsonArray.put(v.id);
-        }
-        jsonObject.put("cn", "!=");
-        jsonObject.put("n", jsonArray);
-        return jsonObject;
-    }
-
-    public HashMap<String, Object> scope2Map(ArrayList<Vertex> scope) {
+    public HashMap<String, Object> scope2Map(HashSet<Vertex> scope) {
         HashMap<String, Object> scopeMap = new HashMap<>();
         ArrayList<Integer> vertexArray = new ArrayList<>();
-        for (Vertex v : scope) {
+        ArrayList<Vertex> vertexes = new ArrayList<>();
+        vertexes.addAll(scope);
+        Collections.sort(vertexes, new Comparator<Vertex>() {
+            @Override
+            public int compare(Vertex v1, Vertex v2) {
+                return v1.id - v2.id;
+            }
+        });
+        for (Vertex v : vertexes) {
             vertexArray.add(v.id);
         }
         scopeMap.put("cn", "!=");

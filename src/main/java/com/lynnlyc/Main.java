@@ -7,7 +7,7 @@ public class Main {
     //TODO 1: check overrides when restoring vertexes;
     //DONE 2: filter training data and predicting data
     //DONE 3: generate mapping
-    //TODO 4: evaluate with open source apps:
+    //DOING 4: evaluate with open source apps:
     // for each open-sourced app, generate a debug version,
     // a release version and the mapping.txt corresponding to the release version
 
