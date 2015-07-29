@@ -81,6 +81,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				# expel the same ones
 				if patternList[1] == obfuscated:
 				#	print patternList[1] + ' -> ' + obfuscated
+					proguardLen -= 1
 					continue;
 				# whether is a obfuscated type. type is in patternList[0]
 				idType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
@@ -97,6 +98,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				# expel the same ones
 				if patternList[1] == obfuscated:
 				#	print patternList[1] + ' -> ' + obfuscated
+					proguardLen -= 1
 					continue;
 				# whether return type is obfuscated
 				retType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
@@ -131,6 +133,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 			if len(mapClassToPatternBlock[obfuscatedClass][originClass]['field']) == 0:
 				if len(mapClassToPatternBlock[obfuscatedClass][originClass]['method']) == 0:
 					#print obfuscatedClass
+					proguardLen -= 1
 					mapClassToPatternBlock.pop(obfuscatedClass)
 
 
