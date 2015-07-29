@@ -42,6 +42,6 @@ for cREQ in cREQList:
 	)
 	inferJSON = json.dumps(inferDict)
 
-	fWrite.write(str(inferJSON) + '\n')
+	fWrite.write(str(inferJSON).replace(' ', '') + '\n')
 
 fWrite.close()
