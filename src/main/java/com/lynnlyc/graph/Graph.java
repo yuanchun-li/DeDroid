@@ -21,23 +21,25 @@ public class Graph {
     private static final String rootCode = "UnunlifyDEX_ROOT";
 
     public HashMap<Object, Vertex> vertexMap;
-    public HashSet<Edge> edges;
-    public HashSet<HashSet<Vertex>> scopes;
+    public ArrayList<Edge> edges;
+    public ArrayList<Vertex> vertexes;
+    public ArrayList<ArrayList<Vertex>> scopes;
     public HashMap<String, Vertex> lastSegVertexOfPackage;
     public Vertex v_root;
 
     public Graph() {
         vertexMap = new HashMap<>();
-        edges = new HashSet<>();
-        scopes = new HashSet<>();
+        edges = new ArrayList<>();
+        vertexes = new ArrayList<>();
+        scopes = new ArrayList<>();
         lastSegVertexOfPackage = new HashMap<>();
         predictedPackageNames = new HashMap<>();
         PackageSeg rootSeg = new PackageSeg(rootCode, rootCode);
         v_root = new Vertex(this, rootSeg, rootSeg.getSegName(), true);
     }
 
-    public HashSet<Vertex> getNewScope() {
-        HashSet<Vertex> scope = new HashSet<>();
+    public ArrayList<Vertex> getNewScope() {
+        ArrayList<Vertex> scope = new ArrayList<>();
         scopes.add(scope);
         return scope;
     }
@@ -54,10 +56,10 @@ public class Graph {
         for (Edge e : edges) {
              query.put(e.toJson());
         }
-        for (HashSet<Vertex> scope : scopes) {
+        for (ArrayList<Vertex> scope : scopes) {
             query.put(scope2Json(scope));
         }
-        for (Vertex v : vertexMap.values()) {
+        for (Vertex v : vertexes) {
             assign.put(v.toJson());
         }
         jsonObject.put("query", query);
@@ -72,10 +74,10 @@ public class Graph {
         for (Edge e : edges) {
             query.add(e.toMap());
         }
-        for (HashSet<Vertex> scope : scopes) {
+        for (ArrayList<Vertex> scope : scopes) {
             query.add(scope2Map(scope));
         }
-        for (Vertex v : vertexMap.values()) {
+        for (Vertex v : vertexes) {
             assign.add(v.toMap());
         }
         requestMap.put("query", query);
@@ -83,7 +85,7 @@ public class Graph {
         return requestMap;
     }
 
-    public JSONObject scope2Json(HashSet<Vertex> scope) {
+    public JSONObject scope2Json(ArrayList<Vertex> scope) {
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         for (Vertex v : scope) {
@@ -94,7 +96,7 @@ public class Graph {
         return jsonObject;
     }
 
-    public HashMap<String, Object> scope2Map(HashSet<Vertex> scope) {
+    public HashMap<String, Object> scope2Map(ArrayList<Vertex> scope) {
         HashMap<String, Object> scopeMap = new HashMap<>();
         ArrayList<Integer> vertexArray = new ArrayList<>();
         for (Vertex v : scope) {

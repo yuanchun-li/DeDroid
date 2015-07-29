@@ -7,6 +7,7 @@ import com.lynnlyc.sootextension.PackageSeg;
 import org.json.JSONObject;
 import soot.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -31,6 +32,7 @@ public class Vertex {
         this.id = count;
         this.predictedName = name;
         count++;
+        g.vertexes.add(this);
         g.vertexMap.put(content, this);
     }
 
@@ -91,7 +93,7 @@ public class Vertex {
         }
     }
 
-    public static Vertex getVertexAndAddToScope(Graph g, HashSet<Vertex> scope, Object object) {
+    public static Vertex getVertexAndAddToScope(Graph g, ArrayList<Vertex> scope, Object object) {
         Vertex v = getVertexFromObject(g, object);
         if (v != null && scope != null) {
             scope.add(v);
@@ -99,7 +101,7 @@ public class Vertex {
         return v;
     }
 
-    public static Vertex getLastSegVertex(Graph g, HashSet<Vertex> scope, String packageName) {
+    public static Vertex getLastSegVertex(Graph g, ArrayList<Vertex> scope, String packageName) {
         if (packageName == null || packageName.length() == 0) {
             return g.v_root;
         }
