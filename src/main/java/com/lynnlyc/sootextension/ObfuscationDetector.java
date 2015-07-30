@@ -97,7 +97,9 @@ public class ObfuscationDetector {
                 packageClassTotal = packageClassTotalMap.get(packageName);
                 packageClassObfuscated = packageClassObfuscatedMap.get(packageName);
             }
-            int total = 0, obfuscated = 0;
+            int total = 1, obfuscated = 0;
+            if (isNameObfuscated(cls.getShortName()))
+                obfuscated++;
             for (SootField f : cls.getFields()) {
                 total++;
                 if (isNameObfuscated(f.getName())) obfuscated++;
