@@ -63,13 +63,13 @@ def parse_args():
     generate options including host name, port number
     """
 	parser = argparse.ArgumentParser(description="generate training data of apks")
-	parser.add_argument("-i", action="store", dest="apk_dir", nargs='?',
+	parser.add_argument("-i", action="store", dest="apk_dir",
 						required=True, help="directory of apks")
-	parser.add_argument("-o", action="store", dest="output_dir", nargs='?',
+	parser.add_argument("-o", action="store", dest="output_dir",
 						required=True, help="directory of output")
-	parser.add_argument("-p", action="store", dest="path_to_unuglifyDEX", nargs='?',
+	parser.add_argument("-p", action="store", dest="path_to_unuglifyDEX",
 						required=True, help="path to unuglifyDEX.jar")
-	parser.add_argument("-l", action="store", dest="apk_limit", nargs='?',
+	parser.add_argument("-l", action="store", dest="apk_limit",
 						help="limit of number of training apks")
 	options = parser.parse_args()
 	print options
