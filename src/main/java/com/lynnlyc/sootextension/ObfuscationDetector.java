@@ -48,7 +48,11 @@ public class ObfuscationDetector {
     }
 
     private boolean isPackageSegObfuscated(PackageSeg seg) {
-        return !Config.isTraining && isNameObfuscated(seg.getSegName());
+        return !Config.isTraining && isPackageSegObfuscated(seg.getSegName());
+    }
+
+    private boolean isPackageSegObfuscated(String name) {
+        return name == null || name.length() < 2;
     }
 
     private boolean isClassObfuscated(SootClass cls) {
@@ -57,7 +61,7 @@ public class ObfuscationDetector {
                     (packageObfuscationRates.get(cls.getPackageName()) > OBFUSCATE_THRESHOLD ||
                             classObfuscationRates.get(cls) > OBFUSCATE_THRESHOLD);
         }
-        return cls.isApplicationClass() && isNameObfuscated(cls.getShortName());
+        return cls.isApplicationClass() && isClassNameObfuscated(cls.getShortName());
     }
 
     private boolean isFieldObfuscated(SootField field) {
@@ -76,9 +80,27 @@ public class ObfuscationDetector {
 
     private static final String excludedNames = "os;tv;up;go;it;do;io;id;of;op;on;or;uk;ui;";
 
+    private boolean isClassNameObfuscated(String name) {
+        if (name == null) return true;
+        if ("R".equals(name)) return false;
+        for (String split : name.split("\\$")) {
+            if (split.length() != 0 && !"R".equals(split)) {
+                name = split;
+                break;
+            }
+        }
+        name = name.toLowerCase();
+        return name.length() < 2 || (name.length() == 2 && !excludedNames.contains(name));
+    }
+
     private boolean isNameObfuscated(String name) {
         if (name == null) return true;
-        name = name.split("\\$")[0].toLowerCase();
+        for (String split : name.split("\\$")) {
+            if (split.length() != 0) {
+                name = split.toLowerCase();
+                break;
+            }
+        }
         return name.length() < 2 || (name.length() == 2 && !excludedNames.contains(name));
     }
 
@@ -98,7 +120,7 @@ public class ObfuscationDetector {
                 packageClassObfuscated = packageClassObfuscatedMap.get(packageName);
             }
             int total = 1, obfuscated = 0;
-            if (isNameObfuscated(cls.getShortName()))
+            if (isClassNameObfuscated(cls.getShortName()))
                 obfuscated++;
             for (SootField f : cls.getFields()) {
                 total++;

@@ -137,15 +137,15 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					mapClassToPatternBlock.pop(obfuscatedClass)
 
 
-	dictDebug = open(report_path + '/dict.txt', 'w')
+	dictDebug = open('dict.txt', 'w')
 	dictDebug.write(str(mapClassToPatternBlock))
 	dictDebug.close()
 
 	# step3: check the predict mapping
 	TP = 0
 	correctTP = 0
-	reportFile = open(report_path + '/report.txt', 'w')
-	correctItemsFile = open(report_path + '/correct.txt', 'w')
+	reportFile = open('report.txt', 'w')
+	correctItemsFile = open('correct.txt', 'w')
 
 	for line in linesPredict:
 		if line[0] == '\t' or line[0] == ' ':
@@ -159,9 +159,9 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				[origin, obfuscated] = line[4:].split(' -> ')
 
 			strMatched = re_func.match(origin)
-			
+
 			if strMatched == None:
-			
+
 				# is a field
 				patternList = re_field.match(origin).groups()
 				# whether is a obfuscated type. type is in patternList[0]
@@ -169,7 +169,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				fieldKey = dictClassPre[patternList[0]] if dictClassPre.has_key(patternList[0]) else patternList[0]
 				idType = dictClassPro[fieldKey] if dictClassPro.has_key(fieldKey) else fieldKey
 				# identifier is in patternList[1]
-				
+
 				if mapClassToPatternBlock[currClass][currClassImg]['field'].has_key(obfuscated) == False:
 					# this should be an impossible case.
 					print 'A non-existing obfuscated identifier: ' + line
@@ -178,15 +178,15 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 						# we got the right type, but not necessary
 						TP += 1
 						correctType = mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated].keys()[0]
-						reportFile.write('\t' + correctType + ' ' + 
-										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] + 
+						reportFile.write('\t' + correctType + ' ' +
+										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] +
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						# non-dicted type that can be retrieved OR obfuscated dicted type
 						if mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] == patternList[1]:
 							# the same identifier
 							correctTP += 1
-							correctItemsFile.write('\t' + correctType + ' ' + 
-										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] + 
+							correctItemsFile.write('\t' + correctType + ' ' +
+										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] +
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						else:
 							# wrong identifier
@@ -197,7 +197,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 						#print 'Key: ' + fieldKey
 						#print 'PatternList[0]: ' + patternList[0]
 
-			else:			
+			else:
 				# is a function
 				patternList = re_func.match(origin).groups()
 				# whether return type is obfuscated
@@ -218,7 +218,7 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					idType = idType[:-1]
 
 				idType += ')'
-				
+
 				if mapClassToPatternBlock[currClass][currClassImg]['method'].has_key(obfuscated) == False:
 					# this should be an impossible case.
 					print 'A non-existing obfuscated identifier: ' + line
@@ -226,15 +226,15 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					if mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated].has_key(idType):
 						# we got the right type, but not necessary
 						TP += 1
-						reportFile.write('\t' + idType + ' ' + 
-										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] + 
+						reportFile.write('\t' + idType + ' ' +
+										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] +
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						# non-dicted type that can be retrieved OR obfuscated dicted type
 						if mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] == patternList[1]:
 							# the same identifier
 							correctTP += 1
-							correctItemsFile.write('\t' + idType + ' ' + 
-										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] + 
+							correctItemsFile.write('\t' + idType + ' ' +
+										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] +
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						else:
 							# wrong identifier
@@ -254,13 +254,13 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				if mapClassToPatternBlock[currClass].has_key(currClassImg) == True:
 					# class name correct
 					correctTP += 1
-					reportFile.write(currClassImg + ' -> ' + currClass 
+					reportFile.write(currClassImg + ' -> ' + currClass
 									 + ' -> ' + currClassImg + '\n')
-					correctItemsFile.write(currClassImg + ' -> ' + currClass 
+					correctItemsFile.write(currClassImg + ' -> ' + currClass
 									 + ' -> ' + currClassImg + '\n')
 				else:
 					correctClass = mapClassToPatternBlock[currClass].keys()[0]
-					reportFile.write(correctClass + 
+					reportFile.write(correctClass +
 									 ' -> ' + currClass + ' -> ' + currClassImg + '\n')
 					# get correct class name
 					currClassImg = correctClass
@@ -280,11 +280,11 @@ def parse_args():
     generate options including input proguard-generated mappings and predict mappings
     """
 	parser = argparse.ArgumentParser(description="comparing proguard-generated and predict mappings")
-	parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir",
+	parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir", nargs='?',
 						required=True, help="directory of proguard-generated mappings file")
-	parser.add_argument("--predict", action="store", dest="predict_mappings_dir",
+	parser.add_argument("--predict", action="store", dest="predict_mappings_dir", nargs='?',
 						required=True, help="directory of predict mappings file")
-	parser.add_argument("-o", action="store", dest="report_path",
+	parser.add_argument("-o", action="store", dest="report_path", nargs='?',
 						required=True, help="directory of report file")
 
 	options = parser.parse_args()

@@ -5,7 +5,7 @@ class TestTrain {
     public int counter = 3;
     private double addValue(double base) {
         base += value;
-        counterIncrease();
+        counter = counterIncrease();
         return base;
     }
     public int counterIncrease() {
