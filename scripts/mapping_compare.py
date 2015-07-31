@@ -7,7 +7,7 @@ import re
 
 RE_CLASS_LINE = re.compile('([^\ ]+) -> ([^\ ]+):\n')
 RE_METHOD_LINE = re.compile('([^\ ]+)\ ([^\ ]+)\((.*)\) -> ([^\ ]+)\n')
-RE_FIELD_LINE = re.compile('([^\ ]+)\ ([^\ ]+)[^\)] -> ([^\ ]+)\n')
+RE_FIELD_LINE = re.compile('([^\ ]+)\ ([^\ \)]+) -> ([^\ ]+)\n')
 
 
 class ObfuscationMapping(object):
