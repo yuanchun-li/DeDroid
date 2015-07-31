@@ -13,6 +13,10 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	proguard_mappings_dir = os.path.abspath(proguard_mappings_dir)
 	predict_mappings_dir = os.path.abspath(predict_mappings_dir)
 	report_path = os.path.abspath(report_path)
+
+	# for debug use, copying mapping files
+	os.system('cp ' + proguard_mappings_dir + ' ' + report_path + '/mappings_proguard.txt')
+	os.system('cp ' + predict_mappings_dir + ' ' + report_path + '/mappings_predict.txt')
 	
 	file_proguard = open(proguard_mappings_dir, 'r');
 	strProguard = file_proguard.read()
@@ -24,9 +28,16 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	file_predict.close()
 	linesPredict = strPredict.split('\n')[:-1]
 
+	UNCHECK_state = 0
+	CHECKED_state = 1
+	SAME_CLASS = 2
+
 	# build proguard and predict dictionaries
 	proguardLen = len(linesProguard)
 	print str(proguardLen) + ' relevant items in Proguard.'
+	# calc later, use incremental way
+	proguardLen = 0
+	
 	predictLen = len(linesPredict)
 	print str(predictLen) + ' relevant items in prediction.'
 	#proguardLen = 0
@@ -81,16 +92,20 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				# expel the same ones
 				if patternList[1] == obfuscated:
 				#	print patternList[1] + ' -> ' + obfuscated
-					proguardLen -= 1
+				#	proguardLen -= 1
 					continue;
+				else:
+					proguardLen += 1
 				# whether is a obfuscated type. type is in patternList[0]
 				idType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
 				
 				# identifier is in patternList[1]
-				if mapClassToPatternBlock[currClass][currClassImg]['field'].has_key(obfuscated) == False:
-					mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated] = {idType: patternList[1]}
+				if mapClassToPatternBlock[currClass]['field'].has_key(obfuscated) == False:
+					mapClassToPatternBlock[currClass]['field'][obfuscated] = {idType: {'origin': patternList[1], 'state': UNCHECK_state}}
 				else:
-					mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][idType] = patternList[1]
+					mapClassToPatternBlock[currClass]['field'][obfuscated][idType] = {}
+					mapClassToPatternBlock[currClass]['field'][obfuscated][idType]['origin'] = patternList[1]
+					mapClassToPatternBlock[currClass]['field'][obfuscated][idType]['state'] = UNCHECK_state
 
 			else:			
 				# is a function
@@ -98,8 +113,10 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				# expel the same ones
 				if patternList[1] == obfuscated:
 				#	print patternList[1] + ' -> ' + obfuscated
-					proguardLen -= 1
+				#	proguardLen -= 1
 					continue;
+				else:
+					proguardLen += 1
 				# whether return type is obfuscated
 				retType = dictClassPro[patternList[0]] if dictClassPro.has_key(patternList[0]) else patternList[0]
 
@@ -116,36 +133,47 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				idType += ')'
 
 				# identifier is in patternList[1]
-				if mapClassToPatternBlock[currClass][currClassImg]['method'].has_key(obfuscated) == False:
-					mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated] = {idType: patternList[1]}
+				if mapClassToPatternBlock[currClass]['method'].has_key(obfuscated) == False:
+					mapClassToPatternBlock[currClass]['method'][obfuscated] = {idType: {'origin': patternList[1], 'state': UNCHECK_state}}
 				else:
-					mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] = patternList[1]
+					mapClassToPatternBlock[currClass]['method'][obfuscated][idType] = {}
+					mapClassToPatternBlock[currClass]['method'][obfuscated][idType]['origin'] = patternList[1]
+					mapClassToPatternBlock[currClass]['method'][obfuscated][idType]['state'] = UNCHECK_state
 			
 		else:
 			[currClassImg, currClass] = line.split(' -> ')
 			currClass = currClass[:-1]
-			mapClassToPatternBlock[currClass] = {currClassImg: {'field':{}, 'method':{}}}
+			#mapClassToPatternBlock[currClass] = {currClassImg: {'field':{}, 'method':{}}}
+			mapClassToPatternBlock[currClass] = {'field':{}, 'method':{}, 'origin': currClassImg, 'state': UNCHECK_state}
 
 	# expel the same classes
 	for obfuscatedClass in mapClassToPatternBlock.keys():
-		originClass = mapClassToPatternBlock[obfuscatedClass].keys()[0]
+		originClass = mapClassToPatternBlock[obfuscatedClass]['origin']
 		if originClass == obfuscatedClass:
-			if len(mapClassToPatternBlock[obfuscatedClass][originClass]['field']) == 0:
-				if len(mapClassToPatternBlock[obfuscatedClass][originClass]['method']) == 0:
-					#print obfuscatedClass
-					proguardLen -= 1
-					mapClassToPatternBlock.pop(obfuscatedClass)
+			mapClassToPatternBlock[obfuscatedClass]['state'] = SAME_CLASS
+			#proguardLen -= 1
+			#if len(mapClassToPatternBlock[obfuscatedClass][originClass]['field']) == 0:
+			#	if len(mapClassToPatternBlock[obfuscatedClass][originClass]['method']) == 0:
+					#print obfuscatedClass			
+			#		mapClassToPatternBlock.pop(obfuscatedClass)
+		else:
+			proguardLen += 1
 
 
-	dictDebug = open('dict.txt', 'w')
+	dictDebug = open(report_path + '/dict.txt', 'w')
 	dictDebug.write(str(mapClassToPatternBlock))
 	dictDebug.close()
 
 	# step3: check the predict mapping
 	TP = 0
 	correctTP = 0
-	reportFile = open('report.txt', 'w')
-	correctItemsFile = open('correct.txt', 'w')
+	reportFile = open(report_path + '/report.txt', 'w')
+	
+	proguardRest = 0
+	predictRest = 0
+	correctItemsFile = open(report_path + '/correct.txt', 'w')
+	proguardRestFile = open(report_path + '/proguard_rest.txt', 'w')
+	predictRestFile = open(report_path + '/predict_rest.txt', 'w')
 
 	for line in linesPredict:
 		if line[0] == '\t' or line[0] == ' ':
@@ -159,9 +187,9 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				[origin, obfuscated] = line[4:].split(' -> ')
 
 			strMatched = re_func.match(origin)
-
+			
 			if strMatched == None:
-
+			
 				# is a field
 				patternList = re_field.match(origin).groups()
 				# whether is a obfuscated type. type is in patternList[0]
@@ -169,35 +197,39 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				fieldKey = dictClassPre[patternList[0]] if dictClassPre.has_key(patternList[0]) else patternList[0]
 				idType = dictClassPro[fieldKey] if dictClassPro.has_key(fieldKey) else fieldKey
 				# identifier is in patternList[1]
-
-				if mapClassToPatternBlock[currClass][currClassImg]['field'].has_key(obfuscated) == False:
-					# this should be an impossible case.
-					print 'A non-existing obfuscated identifier: ' + line
+				
+				if mapClassToPatternBlock[currClass]['field'].has_key(obfuscated) == False:
+					# predictRestFile item
+					predictRest += 1
+					predictRestFile.write('\t' + obfuscated + ' -> ' + obfuscated + ' -> '  + origin + '\n')
+					# print 'A non-existing obfuscated identifier: ' + line
 				else:
-					if mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated].has_key(idType):
+					if mapClassToPatternBlock[currClass]['field'][obfuscated].has_key(idType):
 						# we got the right type, but not necessary
 						TP += 1
-						correctType = mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated].keys()[0]
-						reportFile.write('\t' + correctType + ' ' +
-										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] +
+						mapClassToPatternBlock[currClass]['field'][obfuscated][idType]['state'] = CHECKED_state
+						reportFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass]['field'][obfuscated][idType]['origin'] + 
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						# non-dicted type that can be retrieved OR obfuscated dicted type
-						if mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] == patternList[1]:
+						if mapClassToPatternBlock[currClass]['field'][obfuscated][idType]['origin'] == patternList[1]:
 							# the same identifier
 							correctTP += 1
-							correctItemsFile.write('\t' + correctType + ' ' +
-										 mapClassToPatternBlock[currClass][currClassImg]['field'][obfuscated][correctType] +
+							correctItemsFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass]['field'][obfuscated][idType]['origin'] + 
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						else:
 							# wrong identifier
 							continue
 					else:
 						# Type re-generation failed. It should not be possible.
+						print currClass
+						print idType
 						print 'Type re-generation failed: ' + line
 						#print 'Key: ' + fieldKey
 						#print 'PatternList[0]: ' + patternList[0]
 
-			else:
+			else:			
 				# is a function
 				patternList = re_func.match(origin).groups()
 				# whether return type is obfuscated
@@ -218,23 +250,26 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 					idType = idType[:-1]
 
 				idType += ')'
-
-				if mapClassToPatternBlock[currClass][currClassImg]['method'].has_key(obfuscated) == False:
-					# this should be an impossible case.
-					print 'A non-existing obfuscated identifier: ' + line
+				
+				if mapClassToPatternBlock[currClass]['method'].has_key(obfuscated) == False:
+					# predictRestFile item
+					predictRest += 1
+					predictRestFile.write('\t' + obfuscated + ' -> ' + obfuscated + ' -> '  + origin + '\n')
+					#print 'A non-existing obfuscated identifier: ' + line
 				else:
-					if mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated].has_key(idType):
+					if mapClassToPatternBlock[currClass]['method'][obfuscated].has_key(idType):
 						# we got the right type, but not necessary
 						TP += 1
-						reportFile.write('\t' + idType + ' ' +
-										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] +
+						mapClassToPatternBlock[currClass]['method'][obfuscated][idType]['state'] = CHECKED_state
+						reportFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass]['method'][obfuscated][idType]['origin'] + 
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						# non-dicted type that can be retrieved OR obfuscated dicted type
-						if mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] == patternList[1]:
+						if mapClassToPatternBlock[currClass]['method'][obfuscated][idType]['origin'] == patternList[1]:
 							# the same identifier
 							correctTP += 1
-							correctItemsFile.write('\t' + idType + ' ' +
-										 mapClassToPatternBlock[currClass][currClassImg]['method'][obfuscated][idType] +
+							correctItemsFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass]['method'][obfuscated][idType]['origin'] + 
 										 ' -> ' + obfuscated + ' -> '  + origin + '\n')
 						else:
 							# wrong identifier
@@ -248,29 +283,72 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 			currClass = currClass[:-1]
 			if mapClassToPatternBlock.has_key(currClass) == False:
 				# wrongly judged a class obfuscated
+				# predictRestFile item
+				predictRest += 1
+				predictRestFile.write(currClass + ' -> ' + currClass + ' -> '  + currClassImg + '\n')
 				continue
 			else:
+				if mapClassToPatternBlock[currClass]['state'] == SAME_CLASS:
+					# predictRestFile item
+					#mapClassToPatternBlock[currClass]['state'] = CHECKED_state
+					#predictRest += 1
+					#predictRestFile.write(currClass + ' -> ' + currClass + ' -> '  + currClassImg + '\n')
+					continue
+
 				TP += 1
-				if mapClassToPatternBlock[currClass].has_key(currClassImg) == True:
+				mapClassToPatternBlock[currClass]['state'] = CHECKED_state
+
+				#if mapClassToPatternBlock[currClass]['origin'] == currClassImg:
+				currClassName = mapClassToPatternBlock[currClass]['origin'].split('.')[-1]
+				currClassImgName = currClassImg.split('.')[-1]
 					# class name correct
+				#print currClassName + ': ' + currClassImgName
+				if currClassName == currClassImgName:
 					correctTP += 1
-					reportFile.write(currClassImg + ' -> ' + currClass
+					reportFile.write(currClassImg + ' -> ' + currClass 
 									 + ' -> ' + currClassImg + '\n')
-					correctItemsFile.write(currClassImg + ' -> ' + currClass
+					correctItemsFile.write(currClassImg + ' -> ' + currClass 
 									 + ' -> ' + currClassImg + '\n')
 				else:
-					correctClass = mapClassToPatternBlock[currClass].keys()[0]
-					reportFile.write(correctClass +
+					correctClass = mapClassToPatternBlock[currClass]['origin']
+					reportFile.write(correctClass + 
 									 ' -> ' + currClass + ' -> ' + currClassImg + '\n')
 					# get correct class name
 					currClassImg = correctClass
 
+	# step4: find UNCHECKD ones in proguard
+	for currClass in mapClassToPatternBlock.keys():
+		currClassImg = mapClassToPatternBlock[currClass]['origin']
+		#if mapClassToPatternBlock[currClass]['state'] != CHECKED_state:
+		if mapClassToPatternBlock[currClass]['state'] == UNCHECK_state:
+			proguardRest += 1
+			proguardRestFile.write(currClassImg + ' -> ' + currClass + ' -> '  + currClass + '\n')
+		for field in mapClassToPatternBlock[currClass]['field'].keys():
+			for idType in mapClassToPatternBlock[currClass]['field'][field].keys():
+				if mapClassToPatternBlock[currClass]['field'][field][idType]['state'] != CHECKED_state:
+					proguardRest += 1
+					proguardRestFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass]['field'][field][idType]['origin'] + 
+										 ' -> ' + field + ' -> '  + idType + ' ' + field + '\n')
+		for method in mapClassToPatternBlock[currClass]['method'].keys():
+			for idType in mapClassToPatternBlock[currClass]['method'][method].keys():
+				if mapClassToPatternBlock[currClass]['method'][method][idType]['state'] != CHECKED_state:
+					proguardRest += 1
+					proguardRestFile.write('\t' + idType + ' ' + 
+										 mapClassToPatternBlock[currClass]['method'][method][idType]['origin'] + 
+										 ' -> ' + method + ' -> '  + idType + ' ' + method + '\n')
+
+
 	reportFile.close()
+	correctItemsFile.close()
+	proguardRestFile.close()
+	predictRestFile.close()
+	
 	print 'TP: ' + str(TP)
 	print 'correctTP: ' + str(correctTP)
-	print 'precision: ' + str(float(TP) / float(predictLen))
-	print 'recall: ' + str(float(TP) / float(proguardLen))
-	print 'predict correct rate: ' + str(float(correctTP) / float(TP))
+	print 'proguardRest: ' + str(proguardRest)
+	print 'predictRest: ' + str(predictRest)
+	print 'precision: ' + str(float(correctTP) / (TP + predictRest + proguardRest))
 	# return dictProguard
 
 
@@ -280,11 +358,11 @@ def parse_args():
     generate options including input proguard-generated mappings and predict mappings
     """
 	parser = argparse.ArgumentParser(description="comparing proguard-generated and predict mappings")
-	parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir", nargs='?',
+	parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir",
 						required=True, help="directory of proguard-generated mappings file")
-	parser.add_argument("--predict", action="store", dest="predict_mappings_dir", nargs='?',
+	parser.add_argument("--predict", action="store", dest="predict_mappings_dir",
 						required=True, help="directory of predict mappings file")
-	parser.add_argument("-o", action="store", dest="report_path", nargs='?',
+	parser.add_argument("-o", action="store", dest="report_path",
 						required=True, help="directory of report file")
 
 	options = parser.parse_args()
@@ -298,6 +376,7 @@ def main():
     """
 	opts = parse_args()
 	run(opts.proguard_mappings_dir, opts.predict_mappings_dir, opts.report_path)
+
 	return
 
 
