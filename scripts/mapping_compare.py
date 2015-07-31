@@ -155,15 +155,15 @@ def parse_args():
     generate options including input proguard-generated mappings and predict mappings
     """
     parser = argparse.ArgumentParser(description="comparing proguard-generated and predict mappings")
-    parser.add_argument("--proguard", action="store", dest="proguard_mappings_dir",
-                        required=True, help="directory of proguard-generated mappings file")
-    parser.add_argument("--predict", action="store", dest="predict_mappings_dir",
-                        required=True, help="directory of predict mappings file")
-    parser.add_argument("-o", action="store", dest="report_path",
-                        required=True, help="directory of report file")
+    parser.add_argument("--proguard", action="store", dest="proguard_mapping_file",
+                        required=True, help="path to proguard-generated mapping.txt")
+    parser.add_argument("--predict", action="store", dest="predict_mapping_file",
+                        required=True, help="path to predict mapping.txt")
+    parser.add_argument("-o", action="store", dest="report_dir",
+                        required=True, help="directory of report files")
 
     options = parser.parse_args()
-    print options
+    # print options
     return options
 
 
@@ -172,7 +172,7 @@ def main():
     the main function
     """
     opts = parse_args()
-    run(opts.proguard_mappings_dir, opts.predict_mappings_dir, opts.report_path)
+    run(opts.proguard_mapping_file, opts.predict_mapping_file, opts.report_dir)
 
     return
 

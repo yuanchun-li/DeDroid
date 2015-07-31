@@ -9,6 +9,9 @@ import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.jimple.FieldRef;
 import soot.jimple.InvokeExpr;
+import soot.toolkits.graph.BriefUnitGraph;
+import soot.toolkits.scalar.SimpleLocalDefs;
+import soot.toolkits.scalar.SimpleLocalUses;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -131,6 +134,10 @@ public class FigureExtractor {
                     HashSet<Vertex> methodScope = g.getNewScope();
                     methodScope.add(v_method);
                     Body body = method.retrieveActiveBody();
+                    BriefUnitGraph ug = new BriefUnitGraph(body);
+                    SimpleLocalDefs localDefs = new SimpleLocalDefs(ug);
+                    SimpleLocalUses localUses = new SimpleLocalUses(body, localDefs);
+
                     for (ValueBox valueBox : body.getUseAndDefBoxes()) {
                         Value value = valueBox.getValue();
                         if (value instanceof FieldRef) {
