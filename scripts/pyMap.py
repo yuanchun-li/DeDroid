@@ -3,6 +3,8 @@
 # @Date: 2015.7.28
 #
 
+#TODO dictClassPro is not necessary in step 2
+
 import os
 import sys
 import argparse
@@ -33,15 +35,15 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	SAME_CLASS = 2
 
 	# build proguard and predict dictionaries
-	proguardLen = len(linesProguard)
-	print str(proguardLen) + ' relevant items in Proguard.'
+	#proguardLen = len(linesProguard)
+	#print str(proguardLen) + ' relevant items in Proguard.'
 	# calc later, use incremental way
 	proguardLen = 0
 	
-	predictLen = len(linesPredict)
-	print str(predictLen) + ' relevant items in prediction.'
+	#predictLen = len(linesPredict)
+	#print str(predictLen) + ' relevant items in prediction.'
 	#proguardLen = 0
-	#predictLen = 0
+	predictLen = 0
 	
 	dictClassPro = {}
 	dictClassPre = {}
@@ -223,8 +225,8 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 							continue
 					else:
 						# Type re-generation failed. It should not be possible.
-						print currClass
-						print idType
+						#print currClass
+						#print idType
 						print 'Type re-generation failed: ' + line
 						#print 'Key: ' + fieldKey
 						#print 'PatternList[0]: ' + patternList[0]
@@ -281,11 +283,17 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 		else:
 			[currClassImg, currClass] = line.split(' -> ')
 			currClass = currClass[:-1]
+
+			currClassName = mapClassToPatternBlock[currClass]['origin'].split('.')[-1]
+			currClassImgName = currClassImg.split('.')[-1]
+
 			if mapClassToPatternBlock.has_key(currClass) == False:
 				# wrongly judged a class obfuscated
+				# or a shell class
 				# predictRestFile item
-				predictRest += 1
-				predictRestFile.write(currClass + ' -> ' + currClass + ' -> '  + currClassImg + '\n')
+				if currClassName != currClassImgName:
+					predictRest += 1
+					predictRestFile.write(currClass + ' -> ' + currClass + ' -> '  + currClassImg + '\n')
 				continue
 			else:
 				if mapClassToPatternBlock[currClass]['state'] == SAME_CLASS:
@@ -299,10 +307,10 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 				mapClassToPatternBlock[currClass]['state'] = CHECKED_state
 
 				#if mapClassToPatternBlock[currClass]['origin'] == currClassImg:
-				currClassName = mapClassToPatternBlock[currClass]['origin'].split('.')[-1]
-				currClassImgName = currClassImg.split('.')[-1]
+				
 					# class name correct
 				#print currClassName + ': ' + currClassImgName
+				print currClassImg + ': ' + currClass
 				if currClassName == currClassImgName:
 					correctTP += 1
 					reportFile.write(currClassImg + ' -> ' + currClass 
@@ -345,10 +353,12 @@ def run(proguard_mappings_dir, predict_mappings_dir, report_path):
 	predictRestFile.close()
 	
 	print 'TP: ' + str(TP)
+	print 'proguardLen: ' + str(proguardLen)
 	print 'correctTP: ' + str(correctTP)
 	print 'proguardRest: ' + str(proguardRest)
 	print 'predictRest: ' + str(predictRest)
-	print 'precision: ' + str(float(correctTP) / (TP + predictRest + proguardRest))
+	print 'precision: ' + str(float(correctTP) / (TP + predictRest))
+	print 'precision: ' + str(float(correctTP) / (TP + proguardRest))
 	# return dictProguard
 
 
