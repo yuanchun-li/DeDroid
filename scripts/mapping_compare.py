@@ -33,11 +33,10 @@ class ObfuscationMapping(object):
         for key in sorted(self.mapping):
             out_file.write("%s -> %s\n" % (key, self.mapping[key]))
 
-    def get_all_lines(self):
-        all_lines = set()
-        for key in self.mapping.keys():
-            all_lines.add("%s -> %s\n" % (key, self.mapping[key]))
-        return all_lines
+    def dump_report(self, file_name):
+        out_file = open(file_name, "w")
+        self.dump(out_file)
+        out_file.close()
 
     def _build_package_class_mapping(self):
         for line in self.lines:
@@ -120,28 +119,31 @@ def run(proguard_mapping_file, predict_mapping_file, report_dir):
     predict_mapping_file = os.path.abspath(predict_mapping_file)
     report_dir = os.path.abspath(report_dir)
 
-    proguard_mapping = ObfuscationMapping(proguard_mapping_file)
-    proguard_mapping_report = open(os.path.join(report_dir, "proguard_result.txt"), "w")
-    proguard_mapping.dump(proguard_mapping_report)
-    proguard_mapping_report.close()
-    proguard_mapping_set = proguard_mapping.get_all_lines()
+    proguard = ObfuscationMapping(proguard_mapping_file)
+    proguard.dump_report(report_dir + "/proguard_result.txt")
 
-    predict_mapping = ObfuscationMapping(predict_mapping_file)
-    predict_mapping_report = open(os.path.join(report_dir, "predict_result.txt"), "w")
-    predict_mapping.dump(predict_mapping_report)
-    predict_mapping_report.close()
-    predict_mapping_set = predict_mapping.get_all_lines()
+    predict = ObfuscationMapping(predict_mapping_file)
+    predict.dump_report(report_dir + "/predict_result.txt")
 
-    true_positives = proguard_mapping_set & predict_mapping_set
+    output_template = "Proguard obfuscated %d items, UnuglifyDEX deobfuscated %d items.\n" \
+                      "TP: %d, Recall: %f, Precision: %f\n"
 
-    print 'Proguard obfuscated %d items, UnuglifyDEX deobfuscated %d items.\n' \
-          'TP: %d, precision: %f, recall: %f\n' % \
-          (len(proguard_mapping_set), len(predict_mapping_set), len(true_positives),
-           safe_devide(len(true_positives), len(predict_mapping_set)),
-           safe_devide(len(true_positives), len(proguard_mapping_set)))
+    print "For packages:\n" + output_template % compare_two_dict(proguard.package_mapping, predict.package_mapping)
+    print "For classes:\n" + output_template % compare_two_dict(proguard.class_mapping, predict.class_mapping)
+    print "For fields:\n" + output_template % compare_two_dict(proguard.field_mapping, predict.field_mapping)
+    print "For methods:\n" + output_template % compare_two_dict(proguard.method_mapping, predict.method_mapping)
+    print "In total:\n" + output_template % compare_two_dict(proguard.mapping, predict.mapping)
 
 
-def safe_devide(a, b):
+def compare_two_dict(dict_a, dict_b):
+    set_a = set(dict_a.items())
+    set_b = set(dict_b.items())
+    set_tp = set_a & set_b
+    return (len(set_a), len(set_b), len(set_tp),
+            safe_divide(len(set_tp), len(set_a)), safe_divide(len(set_tp), len(set_b)))
+
+
+def safe_divide(a, b):
     if b <= 0:
         return 1
     return float(a) / b
