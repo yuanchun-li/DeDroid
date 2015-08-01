@@ -128,12 +128,12 @@ def run(proguard_mapping_file, predict_mapping_file, report_dir):
 
     dump_statistics(proguard, predict, sys.stdout)
     compare_report = open(report_dir + "/compare_report.txt", "w")
-    dump_compare_report(proguard, predict, compare_report)
+    dump_report(proguard, predict, compare_report)
 
 
 def dump_statistics(proguard, predict, out_file):
     output_template = "Proguard obfuscated %d items, UnuglifyDEX deobfuscated %d items.\n" \
-                      "TP: %d, Recall: %f, Precision: %f\n"
+                      "TP: %d, Recall: %f, Precision: %f\n\n"
 
     out_file.write("For packages:\n" + output_template % compare_two_dict(proguard.package_mapping, predict.package_mapping))
     out_file.write("For classes:\n" + output_template % compare_two_dict(proguard.class_mapping, predict.class_mapping))
@@ -142,16 +142,24 @@ def dump_statistics(proguard, predict, out_file):
     out_file.write("In total:\n" + output_template % compare_two_dict(proguard.mapping, predict.mapping))
 
 
-def dump_compare_report(proguard, predict, report_file):
-    dump_statistics(proguard, predict, report_file)
-    report_file.write("\n<Obfuscation> <Origin>/<Prediction>\n--------\n")
-    all_keys = set(proguard.mapping.keys()) | set(predict.mapping.keys())
-
+def dump_compare_dict(a, b, report_file, flag="l"):
+    all_keys = set(a.keys()) | set(b.keys())
     for key in sorted(all_keys):
-        value_proguard = safe_get(proguard.mapping, key)
-        value_predict = safe_get(predict.mapping, key)
-        report_file.write("[%s] %s %s/%s\n" %
-                          ("*" if value_proguard == value_predict else "!", key, value_proguard, value_predict))
+        value_proguard = safe_get(a, key)
+        value_predict = safe_get(b, key)
+        line_flag = flag if value_proguard == value_predict else flag.upper()
+        report_file.write("[%s] %s %s/%s\n" % (line_flag, key, value_proguard, value_predict))
+
+
+def dump_report(proguard, predict, report_file):
+    dump_statistics(proguard, predict, report_file)
+    report_file.write("\n[f] <Obfuscation> <Origin>/<Prediction>\n"
+                      "[f] = flag, P,C,M,F = package,class,method,field. Upper case means mismatch.\n"
+                      "--------\n")
+    dump_compare_dict(proguard.package_mapping, predict.package_mapping, report_file, "p")
+    dump_compare_dict(proguard.class_mapping, predict.class_mapping, report_file, "c")
+    dump_compare_dict(proguard.field_mapping, predict.field_mapping, report_file, "f")
+    dump_compare_dict(proguard.method_mapping, predict.method_mapping, report_file, "m")
 
 
 def safe_get(data_dict, key):
