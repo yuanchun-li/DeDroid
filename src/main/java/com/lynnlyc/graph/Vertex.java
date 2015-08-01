@@ -35,6 +35,11 @@ public class Vertex {
         g.vertexMap.put(content, this);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Vertex) && this.id == ((Vertex) o).id;
+    }
+
     public static Vertex getVertexFromObject(Graph g, Object object) {
         HashMap<Object, Vertex> VertexMap = g.vertexMap;
         if (VertexMap.containsKey(object)) {
@@ -46,16 +51,22 @@ public class Vertex {
 
         if (object instanceof SootClass) {
             SootClass cls = (SootClass) object;
-            String name = cls.getShortName();
             boolean isKnown = false;
-            if (cls.isLibraryClass()) isKnown = true;
+            String name = cls.getShortName();
+            if (cls.isLibraryClass()) {
+                isKnown = true;
+//                name = cls.getName();
+            }
             return new Vertex(g, cls, name, isKnown);
         }
         if (object instanceof SootMethod) {
             SootMethod method = (SootMethod) object;
             String name = method.getName();
             boolean isKnown = false;
-            if (method.getDeclaringClass().isLibraryClass()) isKnown = true;
+            if (method.getDeclaringClass().isLibraryClass()) {
+                isKnown = true;
+//                name = method.getSignature();
+            }
             else if (method.isConstructor()) isKnown = true;
             else if (name.startsWith("<") && name.endsWith(">")) isKnown = true;
             return new Vertex(g, method, name, isKnown);
@@ -64,7 +75,10 @@ public class Vertex {
             SootField field = (SootField) object;
             String name = field.getName();
             boolean isKnown = false;
-            if (field.getDeclaringClass().isLibraryClass()) isKnown = true;
+            if (field.getDeclaringClass().isLibraryClass()) {
+                isKnown = true;
+//                name = field.getSignature();
+            }
             return new Vertex(g, field, name, isKnown);
         }
         if (object instanceof Type) {

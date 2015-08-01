@@ -10,7 +10,18 @@ class TestTrain {
     }
     public int counterIncrease() {
         counter += 1;
+        func2(0.1, counter);
         return counter;
+    }
+
+    public void func2(double a, int b) {
+        int c = b + (int)a;
+    }
+
+    public int func3(int a) {
+        int b = func3(a);
+        value = b;
+        return b;
     }
 }
 

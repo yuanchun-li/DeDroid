@@ -21,16 +21,22 @@ public class Graph {
     private static final String rootCode = "UnunlifyDEX_ROOT";
 
     public HashMap<Object, Vertex> vertexMap;
-    public ArrayList<Edge> edges;
     public ArrayList<Vertex> vertexes;
+
+    public HashSet<Edge> edgeSet;
+    public ArrayList<Edge> edges;
+
     public ArrayList<HashSet<Vertex>> scopes;
     public HashMap<String, Vertex> lastSegVertexOfPackage;
     public Vertex v_root;
 
     public Graph() {
         vertexMap = new HashMap<>();
-        edges = new ArrayList<>();
         vertexes = new ArrayList<>();
+
+        edgeSet = new HashSet<>();
+        edges = new ArrayList<>();
+
         scopes = new ArrayList<>();
         lastSegVertexOfPackage = new HashMap<>();
         predictedPackageNames = new HashMap<>();
@@ -47,6 +53,29 @@ public class Graph {
     public void dump(PrintStream ps) {
         ps.println(this.toJson().toString());
         ps.flush();
+    }
+
+    public void sortGraph() {
+        ArrayList<Edge> dup_edges = new ArrayList<>();
+        dup_edges.addAll(edgeSet);
+        Collections.sort(dup_edges, new Comparator<Edge>() {
+            @Override
+            public int compare(Edge o1, Edge o2) {
+                if (o1.source.id == o2.source.id) {
+                    if (o1.target.id == o2.target.id) {
+                        return String.CASE_INSENSITIVE_ORDER.compare(o1.type, o2.type);
+                    }
+                    return o1.target.id - o2.target.id;
+                }
+                return o1.source.id - o2.source.id;
+            }
+        });
+        Edge prev_edge = null;
+        for (Edge edge : dup_edges) {
+            if (edge.equals(prev_edge)) continue;
+            edges.add(edge);
+            prev_edge = edge;
+        }
     }
 
     public JSONObject toJson() {
