@@ -6,6 +6,7 @@ import com.lynnlyc.sootextension.ObfuscationDetector;
 import com.lynnlyc.sootextension.PackageSeg;
 import org.json.JSONObject;
 import soot.*;
+import soot.jimple.Constant;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,8 +100,11 @@ public class Vertex {
             PackageSeg packageSeg = (PackageSeg) object;
             return new Vertex(g, packageSeg, packageSeg.getSegName(), false);
         }
+        if (object instanceof Constant) {
+            Constant constant = (Constant) object;
+            return new Vertex(g, constant, constant.toString(), true);
+        }
         if (object instanceof String) {
-            // it is a constant
             String name = (String) object;
             return new Vertex(g, name, name, true);
         }

@@ -158,10 +158,11 @@ public class FigureExtractor {
                             Vertex v_used_method = Vertex.getVertexAndAddToScope(
                                     g, methodScope, ((InvokeExpr) value).getMethod());
                             new Edge(g, Edge.TYPE_USE_METHOD, v_method, v_used_method);
-                        } else if (value instanceof Constant) {
-                            Vertex v_used_constant = Vertex.getVertexFromObject(g, value);
-                            new Edge(g, Edge.TYPE_USE_CONSTANT, v_method, v_used_constant);
                         }
+//                        else if (value instanceof Constant) {
+//                            Vertex v_used_constant = Vertex.getVertexFromObject(g, value);
+//                            new Edge(g, Edge.TYPE_USE_CONSTANT, v_method, v_used_constant);
+//                        }
                     }
 
                     BriefUnitGraph ug = new BriefUnitGraph(body);
