@@ -3,6 +3,7 @@ __author__ = 'yuanchun'
 import os
 import argparse
 import re
+import sys
 
 
 RE_CLASS_LINE = re.compile('([^\ ]+) -> ([^\ ]+):\n')
@@ -125,14 +126,38 @@ def run(proguard_mapping_file, predict_mapping_file, report_dir):
     predict = ObfuscationMapping(predict_mapping_file)
     predict.dump_report(report_dir + "/predict_result.txt")
 
+    dump_statistics(proguard, predict, sys.stdout)
+    compare_report = open(report_dir + "/compare_report.txt", "w")
+    dump_compare_report(proguard, predict, compare_report)
+
+
+def dump_statistics(proguard, predict, out_file):
     output_template = "Proguard obfuscated %d items, UnuglifyDEX deobfuscated %d items.\n" \
                       "TP: %d, Recall: %f, Precision: %f\n"
 
-    print "For packages:\n" + output_template % compare_two_dict(proguard.package_mapping, predict.package_mapping)
-    print "For classes:\n" + output_template % compare_two_dict(proguard.class_mapping, predict.class_mapping)
-    print "For fields:\n" + output_template % compare_two_dict(proguard.field_mapping, predict.field_mapping)
-    print "For methods:\n" + output_template % compare_two_dict(proguard.method_mapping, predict.method_mapping)
-    print "In total:\n" + output_template % compare_two_dict(proguard.mapping, predict.mapping)
+    out_file.write("For packages:\n" + output_template % compare_two_dict(proguard.package_mapping, predict.package_mapping))
+    out_file.write("For classes:\n" + output_template % compare_two_dict(proguard.class_mapping, predict.class_mapping))
+    out_file.write("For fields:\n" + output_template % compare_two_dict(proguard.field_mapping, predict.field_mapping))
+    out_file.write("For methods:\n" + output_template % compare_two_dict(proguard.method_mapping, predict.method_mapping))
+    out_file.write("In total:\n" + output_template % compare_two_dict(proguard.mapping, predict.mapping))
+
+
+def dump_compare_report(proguard, predict, report_file):
+    dump_statistics(proguard, predict, report_file)
+    report_file.write("\n<Obfuscation> <Origin>/<Prediction>\n--------\n")
+    all_keys = set(proguard.mapping.keys()) | set(predict.mapping.keys())
+
+    for key in sorted(all_keys):
+        value_proguard = safe_get(proguard.mapping, key)
+        value_predict = safe_get(predict.mapping, key)
+        report_file.write("[%s] %s %s/%s\n" %
+                          ("*" if value_proguard == value_predict else "!", key, value_proguard, value_predict))
+
+
+def safe_get(data_dict, key):
+    if key in data_dict.keys():
+        return data_dict[key]
+    return "?"
 
 
 def compare_two_dict(dict_a, dict_b):
