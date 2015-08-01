@@ -25,7 +25,7 @@ def run(apk_dir, output_dir, path_to_unuglifyDEX, apk_limit):
 	time.sleep(2)
 
 	apkList = os.popen("ls %s/*.apk" % apk_dir).read().split('\n')[:-1]
-	sdkPara = '-force-android-jar $ANDROID_SDK_HOME/platforms/android-22/android.jar'
+	sdkPara = '-sdk $ANDROID_SDK_HOME/platforms/android-22/android.jar'
 
 	fJsonList = open("%s/%s" % (output_dir, training_file_name), 'w')
 	fJsonList.close()
@@ -37,7 +37,7 @@ def run(apk_dir, output_dir, path_to_unuglifyDEX, apk_limit):
 			break
 		print(str(iCount) + '/' + str(totalNum))
 		iCount = iCount + 1
-		(retVal, dexLog) = commands.getstatusoutput("java -jar %s -i %s -o %s -m train %s" %
+		(retVal, dexLog) = commands.getstatusoutput("java -jar %s -i %s -o %s -train %s" %
 													(path_to_unuglifyDEX, apk, output_dir, sdkPara))
 
 		if retVal != 0:
@@ -54,7 +54,7 @@ def run(apk_dir, output_dir, path_to_unuglifyDEX, apk_limit):
 		fJsonList.write(jsonObject)
 		fJsonList.close()
 
-		# os.system('rm -rf %s/UnuglifyDex_TRAIN*' % output_dir)
+		os.system('rm -rf %s/UnuglifyDex_TRAIN*' % output_dir)
 
 
 def parse_args():
