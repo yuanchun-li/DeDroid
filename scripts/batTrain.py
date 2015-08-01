@@ -37,7 +37,7 @@ def run(apk_dir, output_dir, path_to_unuglifyDEX, apk_limit):
 			break
 		print(str(iCount) + '/' + str(totalNum))
 		iCount = iCount + 1
-		(retVal, dexLog) = commands.getstatusoutput("java -jar %s -i %s -o %s -m train %s" %
+		(retVal, dexLog) = commands.getstatusoutput("java -jar %s -i %s -o %s -train %s" %
 													(path_to_unuglifyDEX, apk, output_dir, sdkPara))
 
 		if retVal != 0:
