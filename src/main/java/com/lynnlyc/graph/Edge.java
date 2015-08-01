@@ -14,7 +14,7 @@ public class Edge {
     public Vertex target;
 
     // Each edge describe a relation between two elements
-    // Class: C, Type: T, Method: M, Field: F, Package: P, Modifier: O
+    // Class: C, Type: T, Method: M, Field: F, Package: P, Modifier: O, Constant: S
 
     // relationships between classes
     public static final String TYPE_INHERIT = "C_C_inherit";
@@ -24,6 +24,7 @@ public class Edge {
     // relationships inside class
     public static final String TYPE_FIELD = "C_F_field";
     public static final String TYPE_METHOD = "C_M_method";
+    public static final String TYPE_CONSTRUCTOR = "C_M_constructor";
     public static final String TYPE_CLASS_MODIFIER = "C_O_modifier";
     public static final String TYPE_METHOD_MODIFIER = "M_O_modifier";
     public static final String TYPE_FIELD_MODIFIER = "F_O_modifier";
@@ -35,10 +36,13 @@ public class Edge {
     public static final String TYPE_EXCEPTION = "M_C_exception";
     public static final String TYPE_USE_FIELD = "M_F_use";
     public static final String TYPE_USE_METHOD = "M_M_use";
+    public static final String TYPE_USE_CONSTANT = "M_S_use";
+    // Usage order
+    public static final String TYPE_USE_ORDER = "MF_MF_use_after";
 
     // define-use relationships
     // a field is used to define another field
-    public static final String TYPE_DEFINE_USE_FIELD_FILED = "F_F_define_use";
+    public static final String TYPE_DEFINE_USE_FIELD_FIELD = "F_F_define_use";
     // a method parameter is used to define a field
     public static final String TYPE_DEFINE_USE_PARA_FIELD = "M_F_define_use_para_";
     // a field is used to define a method parameter

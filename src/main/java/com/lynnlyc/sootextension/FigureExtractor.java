@@ -8,11 +8,12 @@ import com.lynnlyc.graph.Graph;
 import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.Body;
-import soot.JastAddJ.*;
+import soot.dava.toolkits.base.AST.structuredAnalysis.ReachingDefs;
 import soot.jimple.*;
 import soot.jimple.Stmt;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.BriefUnitGraph;
+import soot.toolkits.graph.pdg.HashMutablePDG;
 import soot.toolkits.scalar.*;
 
 import java.util.HashSet;
@@ -86,8 +87,8 @@ public class FigureExtractor {
             // for each field
             for (SootField field : cls.getFields()) {
                 // add field edges
-                Vertex v_field = Vertex.getVertexAndAddToScope
-                        (g, classScope, field);
+                Vertex v_field = Vertex.getVertexAndAddToScope(
+                        g, classScope, field);
                 new Edge(g, Edge.TYPE_FIELD, v_cls, v_field);
 
                 // add field type edges
@@ -98,8 +99,8 @@ public class FigureExtractor {
 
                 // add field modifier edges
                 int field_modifier = field.getModifiers();
-                Vertex v_field_modifier = Vertex.getVertexFromObject
-                        (g, field_modifier);
+                Vertex v_field_modifier = Vertex.getVertexFromObject(
+                        g, field_modifier);
                 new Edge(g, Edge.TYPE_FIELD_MODIFIER, v_field, v_field_modifier);
             }
 
@@ -108,7 +109,10 @@ public class FigureExtractor {
                 // add method edges
                 Vertex v_method = Vertex.getVertexAndAddToScope(
                         g, classScope, method);
-                new Edge(g, Edge.TYPE_METHOD, v_cls, v_method);
+                if (method.isConstructor())
+                    new Edge(g, Edge.TYPE_CONSTRUCTOR, v_cls, v_method);
+                else
+                    new Edge(g, Edge.TYPE_METHOD, v_cls, v_method);
 
                 // add method return type edges
                 Type ret_type = method.getReturnType();
@@ -117,7 +121,7 @@ public class FigureExtractor {
                 new Edge(g, Edge.TYPE_METHOD_RET_INSTANCE, v_method, v_ret_type);
 
                 // add method parameter type edges
-                int para_index = 1;
+                int para_index = 0;
                 for (Type para_type : method.getParameterTypes()) {
                     Vertex v_para_type = Vertex.getVertexAndAddToScope(
                             g, classScope, para_type);
@@ -154,6 +158,9 @@ public class FigureExtractor {
                             Vertex v_used_method = Vertex.getVertexAndAddToScope(
                                     g, methodScope, ((InvokeExpr) value).getMethod());
                             new Edge(g, Edge.TYPE_USE_METHOD, v_method, v_used_method);
+                        } else if (value instanceof Constant) {
+                            Vertex v_used_constant = Vertex.getVertexFromObject(g, value);
+                            new Edge(g, Edge.TYPE_USE_CONSTANT, v_method, v_used_constant);
                         }
                     }
 
@@ -185,7 +192,7 @@ public class FigureExtractor {
                                         if (leftOpValue instanceof FieldRef) {
                                             Vertex v_def_field = Vertex.getVertexAndAddToScope(
                                                     g, methodScope, ((FieldRef) value).getField());
-                                            new Edge(g, Edge.TYPE_DEFINE_USE_FIELD_FILED,
+                                            new Edge(g, Edge.TYPE_DEFINE_USE_FIELD_FIELD,
                                                     v_used_field, v_def_field);
                                         }
                                     }
@@ -242,6 +249,32 @@ public class FigureExtractor {
                             }
                         }
                     }
+
+                    // consider field/method usage order
+                    UsageOrderAnalysis uoa = new UsageOrderAnalysis(ug);
+                    for (Unit u : body.getUnits()) {
+                        Vertex v_usage = null;
+                        if (!(u instanceof Stmt)) continue;
+                        Stmt s = (Stmt) u;
+                        if (s.containsFieldRef()) {
+                            v_usage = Vertex.getVertexAndAddToScope(g, methodScope,
+                                    s.getFieldRef().getField());
+                        } else if (s.containsInvokeExpr()) {
+                            v_usage = Vertex.getVertexAndAddToScope(g, methodScope,
+                                    s.getInvokeExpr().getMethod());
+                        }
+                        if (v_usage == null) continue;
+                        for (SootField f_usage_before : uoa.getFieldUsagesBefore(u)) {
+                            Vertex v_usage_before = Vertex.getVertexAndAddToScope(g,
+                                    methodScope, f_usage_before);
+                            new Edge(g, Edge.TYPE_USE_ORDER, v_usage, v_usage_before);
+                        }
+                        for (SootMethod m_usage_before : uoa.getMethodUsagesBefore(u)) {
+                            Vertex v_usage_before = Vertex.getVertexAndAddToScope(g,
+                                    methodScope, m_usage_before);
+                            new Edge(g, Edge.TYPE_USE_ORDER, v_usage, v_usage_before);
+                        }
+                    }
                 } catch (Exception e) {
                     Util.logException(e);
                 }
@@ -262,15 +295,6 @@ public class FigureExtractor {
             allUses.add(unitValueBoxPair);
             getAllUsesOf(use, allUses, localUses);
         }
-    }
-
-    public HashSet<Value> getAllDefinedValuesIn(HashSet<UnitValueBoxPair> units) {
-        HashSet<Value> allDefs = new HashSet<>();
-        for (UnitValueBoxPair u_vb : units) {
-            for (ValueBox vb : u_vb.getUnit().getDefBoxes())
-                allDefs.add(vb.getValue());
-        }
-        return allDefs;
     }
 
     public void getAllDefsOf(Unit u, HashSet<Unit> allDefs, LocalDefs localDefs) {

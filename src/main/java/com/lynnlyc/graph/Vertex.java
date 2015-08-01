@@ -99,6 +99,11 @@ public class Vertex {
             PackageSeg packageSeg = (PackageSeg) object;
             return new Vertex(g, packageSeg, packageSeg.getSegName(), false);
         }
+        if (object instanceof String) {
+            // it is a constant
+            String name = (String) object;
+            return new Vertex(g, name, name, true);
+        }
         else {
             String message = "unknown vertex type:" + object.getClass().toString();
             Util.LOGGER.warning(message);
