@@ -1,6 +1,7 @@
 package com.lynnlyc.graph;
 
 import org.json.JSONObject;
+import soot.SootClass;
 
 import java.util.HashMap;
 
@@ -68,8 +69,21 @@ public class Edge {
         this.type = type;
         this.source = source;
         this.target = target;
-        if (source != null && target != null && source != target)
+
+        if (this.isValid())
             g.edgeSet.add(this);
+    }
+
+    private boolean isValid() {
+        if (source == null || target == null || source == target)
+            return false;
+        SootClass source_cls = source.getSootClass();
+        SootClass target_cls = target.getSootClass();
+        if (source_cls == null || target_cls == null) return true;
+        if (source_cls.isApplicationClass() && target_cls.isApplicationClass()) return true;
+        if (source_cls.isLibraryClass() && target_cls.isLibraryClass()) return false;
+        this.type += "_LIB";
+        return true;
     }
 
     @Override

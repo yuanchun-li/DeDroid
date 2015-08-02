@@ -56,7 +56,7 @@ public class Vertex {
             String name = cls.getShortName();
             if (cls.isLibraryClass()) {
                 isKnown = true;
-//                name = cls.getName();
+                name = cls.getName();
             }
             return new Vertex(g, cls, name, isKnown);
         }
@@ -66,7 +66,7 @@ public class Vertex {
             boolean isKnown = false;
             if (method.getDeclaringClass().isLibraryClass()) {
                 isKnown = true;
-//                name = method.getSignature();
+                name = method.getSignature();
             }
             else if (method.isConstructor()) isKnown = true;
             else if (name.startsWith("<") && name.endsWith(">")) isKnown = true;
@@ -78,7 +78,7 @@ public class Vertex {
             boolean isKnown = false;
             if (field.getDeclaringClass().isLibraryClass()) {
                 isKnown = true;
-//                name = field.getSignature();
+                name = field.getSignature();
             }
             return new Vertex(g, field, name, isKnown);
         }
@@ -174,5 +174,12 @@ public class Vertex {
 
     public void setPredictedName(String predictedName) {
         this.predictedName = predictedName;
+    }
+
+    public SootClass getSootClass() {
+        if (this.content instanceof SootClass) return (SootClass) this.content;
+        if (this.content instanceof SootField) return ((SootField) this.content).getDeclaringClass();
+        if (this.content instanceof SootMethod) return ((SootMethod) this.content).getDeclaringClass();
+        return null;
     }
 }
