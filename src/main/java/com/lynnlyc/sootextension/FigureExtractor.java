@@ -258,19 +258,20 @@ public class FigureExtractor {
                                             new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_FIELD + source_para_idx,
                                                     v_method, v_target);
                                         }
-                                    } else if (u_use instanceof JReturnStmt) {
-                                        new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_RET,
-                                                v_method, v_method);
                                     }
-                                    if (((Stmt) u_use).containsInvokeExpr()) {
-                                        InvokeExpr invoke_expr = ((Stmt) u_use).getInvokeExpr();
-                                        Vertex v_target = Vertex.getVertexAndAddToScope(
-                                                g, methodScope, invoke_expr.getMethod());
-                                        int target_para_idx = invoke_expr.getArgs().indexOf(value_use);
-                                        if (target_para_idx < 0) continue;
-                                        new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_PARA + source_para_idx + "_" + target_para_idx,
-                                                v_method, v_target);
-                                    }
+//                                    else if (u_use instanceof JReturnStmt) {
+//                                        new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_RET,
+//                                                v_method, v_method);
+//                                    }
+//                                    if (((Stmt) u_use).containsInvokeExpr()) {
+//                                        InvokeExpr invoke_expr = ((Stmt) u_use).getInvokeExpr();
+//                                        Vertex v_target = Vertex.getVertexAndAddToScope(
+//                                                g, methodScope, invoke_expr.getMethod());
+//                                        int target_para_idx = invoke_expr.getArgs().indexOf(value_use);
+//                                        if (target_para_idx < 0) continue;
+//                                        new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_PARA + source_para_idx + "_" + target_para_idx,
+//                                                v_method, v_target);
+//                                    }
                                 }
                             }
                         }
