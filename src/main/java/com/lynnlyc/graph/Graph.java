@@ -27,8 +27,11 @@ public class Graph {
     public ArrayList<Edge> edges;
 
     public ArrayList<HashSet<Vertex>> scopes;
+    public HashMap<Object, HashSet<Vertex>> scopeMap;
+
     public HashMap<String, Vertex> lastSegVertexOfPackage;
     public Vertex v_root;
+    public HashSet<Vertex> root_scope;
 
     public Graph() {
         vertexMap = new HashMap<>();
@@ -38,16 +41,29 @@ public class Graph {
         edges = new ArrayList<>();
 
         scopes = new ArrayList<>();
+        scopeMap = new HashMap<>();
+
         lastSegVertexOfPackage = new HashMap<>();
         predictedPackageNames = new HashMap<>();
+
+
         PackageSeg rootSeg = new PackageSeg(rootCode, rootCode);
         v_root = new Vertex(this, rootSeg, rootSeg.getSegName(), true);
+        root_scope = getScopeByKey(rootCode);
+        root_scope.add(v_root);
     }
 
-    public HashSet<Vertex> getNewScope() {
+    private HashSet<Vertex> getNewScope() {
         HashSet<Vertex> scope = new HashSet<>();
         scopes.add(scope);
         return scope;
+    }
+
+    public HashSet<Vertex> getScopeByKey(Object key) {
+        if (scopeMap.containsKey(key)) return scopeMap.get(key);
+        HashSet<Vertex> newScope = getNewScope();
+        scopeMap.put(key, newScope);
+        return newScope;
     }
 
     public void dump(PrintStream ps) {

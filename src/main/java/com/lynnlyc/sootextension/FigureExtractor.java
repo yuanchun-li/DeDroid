@@ -8,7 +8,6 @@ import com.lynnlyc.graph.Graph;
 import com.lynnlyc.graph.Vertex;
 import soot.*;
 import soot.Body;
-import soot.dava.toolkits.base.AST.structuredAnalysis.ReachingDefs;
 import soot.jimple.*;
 import soot.jimple.Stmt;
 import soot.jimple.internal.*;
@@ -37,26 +36,27 @@ public class FigureExtractor {
         }
 //        PackManager.v().runPacks();
         Graph g = new Graph();
-        HashSet<Vertex> globalScope = g.getNewScope();
-        globalScope.add(g.v_root);
 
         Util.LOGGER.info("generating graph");
         for (SootClass cls : Config.applicationClasses) {
             if (Config.isTraining && ObfuscationDetector.v().isObfuscated(cls))
                 continue;
 
-            Vertex v_cls = Vertex.getVertexAndAddToScope(g, globalScope, cls);
+            String pkgName = cls.getPackageName();
+            Vertex v_pkg = Vertex.getLastSegVertex(g, g.root_scope, pkgName);
+            HashSet<Vertex> packageScope = g.getScopeByKey(pkgName);
+
+            Vertex v_cls = Vertex.getVertexAndAddToScope(g, packageScope, cls);
 
             // add belong to package edges
             // add package_joint edges (inside this call)
-            new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls,
-                    Vertex.getLastSegVertex(g, globalScope, cls.getPackageName()));
+            new Edge(g, Edge.TYPE_BELONG_TO_PACKAGE, v_cls, v_pkg);
 
             // add INHERIT edges
             if (cls.hasSuperclass()) {
                 SootClass super_cls = cls.getSuperclass();
                 Vertex v_super_cls = Vertex.getVertexAndAddToScope(
-                        g, globalScope, super_cls);
+                        g, packageScope, super_cls);
                 new Edge(g, Edge.TYPE_INHERIT, v_cls, v_super_cls);
             }
 
@@ -64,14 +64,14 @@ public class FigureExtractor {
             if (cls.hasOuterClass()) {
                 SootClass outer_cls = cls.getOuterClass();
                 Vertex v_outer_cls = Vertex.getVertexAndAddToScope(
-                        g, globalScope, outer_cls);
+                        g, packageScope, outer_cls);
                 new Edge(g, Edge.TYPE_OUTER, v_cls, v_outer_cls);
             }
 
             // add implement edges
             for (SootClass interface_cls : cls.getInterfaces()) {
                 Vertex v_interface_cls = Vertex.getVertexAndAddToScope(
-                        g, globalScope, interface_cls);
+                        g, packageScope, interface_cls);
                 new Edge(g, Edge.TYPE_IMPLEMENT, v_cls, v_interface_cls);
             }
 
@@ -82,7 +82,7 @@ public class FigureExtractor {
             new Edge(g, Edge.TYPE_CLASS_MODIFIER, v_cls, v_cls_modifier);
 
             // Consider the scope inside the class
-            HashSet<Vertex> classScope = g.getNewScope();
+            HashSet<Vertex> classScope = g.getScopeByKey(cls);
             classScope.add(v_cls);
             // for each field
             for (SootField field : cls.getFields()) {
@@ -144,7 +144,7 @@ public class FigureExtractor {
                 // consider the scope inside a method
                 if (method.getSource() == null) continue;
                 try {
-                    HashSet<Vertex> methodScope = g.getNewScope();
+                    HashSet<Vertex> methodScope = g.getScopeByKey(method);
                     methodScope.add(v_method);
                     Body body = method.retrieveActiveBody();
 
