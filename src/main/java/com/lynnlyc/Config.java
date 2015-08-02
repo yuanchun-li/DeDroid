@@ -54,6 +54,7 @@ public class Config {
 
     private static PrintStream resultPs;
 
+    public static boolean defUseMode = true;
     public static boolean usageOrderMode = false;
     public static boolean usageAfterMode = false;
 
@@ -72,6 +73,7 @@ public class Config {
                 .longOpt("android-sdk").hasArg().desc("path to android.jar").build();
         Option server = Option.builder("server").argName("url").hasArg()
                 .desc("Nice2Predict server address, default http://localhost:5745").build();
+        Option disableDUOpt = new Option("no_du", "disable def-use analysis");
         Option usageOrderOpt = new Option("usage_order", "do usage-order analysis");
         Option usageAfterOpt = new Option("usage_after", "do usage-after analysis");
 
@@ -83,6 +85,7 @@ public class Config {
         options.addOption(library);
         options.addOption(sdk);
         options.addOption(server);
+        options.addOption(disableDUOpt);
         options.addOption(usageOrderOpt);
         options.addOption(usageAfterOpt);
 
@@ -135,6 +138,9 @@ public class Config {
                 } catch (MalformedURLException e) {
                     throw new ParseException("Server url error. " + e.getMessage());
                 }
+            }
+            if (cmd.hasOption("no_du")) {
+                Config.defUseMode = false;
             }
             if (cmd.hasOption("usage_order")) {
                 Config.usageOrderMode = true;
