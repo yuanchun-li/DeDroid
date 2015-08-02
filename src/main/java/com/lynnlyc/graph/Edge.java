@@ -38,7 +38,7 @@ public class Edge {
     public static final String TYPE_USE_METHOD = "M_M_use";
     public static final String TYPE_USE_CONSTANT = "M_S_use";
     // Usage order
-    public static final String TYPE_USE_ORDER = "MF_MF_use_after";
+    public static final String TYPE_USE_ORDER = "MF_MF_usage_order";
 
     // define-use relationships
     // a field is used to define another field

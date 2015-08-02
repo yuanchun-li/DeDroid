@@ -252,29 +252,35 @@ public class FigureExtractor {
                     }
 
                     // consider field/method usage order
-                    UsageOrderAnalysis uoa = new UsageOrderAnalysis(ug);
-                    for (Unit u : body.getUnits()) {
-                        Vertex v_usage = null;
-                        if (!(u instanceof Stmt)) continue;
-                        Stmt s = (Stmt) u;
-                        if (s.containsFieldRef()) {
-                            v_usage = Vertex.getVertexAndAddToScope(g, methodScope,
-                                    s.getFieldRef().getField());
-                        } else if (s.containsInvokeExpr()) {
-                            v_usage = Vertex.getVertexAndAddToScope(g, methodScope,
-                                    s.getInvokeExpr().getMethod());
+                    if (Config.usageOrderMode) {
+                        UsageOrderAnalysis uoa = new UsageOrderAnalysis(ug);
+                        for (Unit u : body.getUnits()) {
+                            Vertex v_usage = null;
+                            if (!(u instanceof Stmt)) continue;
+                            Stmt s = (Stmt) u;
+                            if (s.containsFieldRef()) {
+                                v_usage = Vertex.getVertexAndAddToScope(g, methodScope,
+                                        s.getFieldRef().getField());
+                            } else if (s.containsInvokeExpr()) {
+                                v_usage = Vertex.getVertexAndAddToScope(g, methodScope,
+                                        s.getInvokeExpr().getMethod());
+                            }
+                            if (v_usage == null) continue;
+                            for (SootField f_usage_before : uoa.getFieldUsagesBefore(u)) {
+                                Vertex v_usage_before = Vertex.getVertexAndAddToScope(g,
+                                        methodScope, f_usage_before);
+                                new Edge(g, Edge.TYPE_USE_ORDER, v_usage, v_usage_before);
+                            }
+                            for (SootMethod m_usage_before : uoa.getMethodUsagesBefore(u)) {
+                                Vertex v_usage_before = Vertex.getVertexAndAddToScope(g,
+                                        methodScope, m_usage_before);
+                                new Edge(g, Edge.TYPE_USE_ORDER, v_usage, v_usage_before);
+                            }
                         }
-                        if (v_usage == null) continue;
-                        for (SootField f_usage_before : uoa.getFieldUsagesBefore(u)) {
-                            Vertex v_usage_before = Vertex.getVertexAndAddToScope(g,
-                                    methodScope, f_usage_before);
-                            new Edge(g, Edge.TYPE_USE_ORDER, v_usage, v_usage_before);
-                        }
-                        for (SootMethod m_usage_before : uoa.getMethodUsagesBefore(u)) {
-                            Vertex v_usage_before = Vertex.getVertexAndAddToScope(g,
-                                    methodScope, m_usage_before);
-                            new Edge(g, Edge.TYPE_USE_ORDER, v_usage, v_usage_before);
-                        }
+                    }
+                    // consider usage after relationships
+                    if (Config.usageAfterMode) {
+                        continue;
                     }
                 } catch (Exception e) {
                     Util.logException(e);

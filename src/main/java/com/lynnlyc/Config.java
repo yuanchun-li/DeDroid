@@ -54,6 +54,9 @@ public class Config {
 
     private static PrintStream resultPs;
 
+    public static boolean usageOrderMode = false;
+    public static boolean usageAfterMode = false;
+
     public static boolean parseArgs(String[] args) {
         org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
         Option quiet = new Option("quiet", "be extra quiet");
@@ -69,6 +72,8 @@ public class Config {
                 .longOpt("android-sdk").hasArg().desc("path to android.jar").build();
         Option server = Option.builder("server").argName("url").hasArg()
                 .desc("Nice2Predict server address, default http://localhost:5745").build();
+        Option usageOrderOpt = new Option("usage_order", "do usage-order analysis");
+        Option usageAfterOpt = new Option("usage_after", "do usage-after analysis");
 
         options.addOption(quiet);
         options.addOption(debug);
@@ -78,6 +83,8 @@ public class Config {
         options.addOption(library);
         options.addOption(sdk);
         options.addOption(server);
+        options.addOption(usageOrderOpt);
+        options.addOption(usageAfterOpt);
 
         CommandLineParser parser = new DefaultParser();
 
@@ -128,6 +135,12 @@ public class Config {
                 } catch (MalformedURLException e) {
                     throw new ParseException("Server url error. " + e.getMessage());
                 }
+            }
+            if (cmd.hasOption("usage_order")) {
+                Config.usageOrderMode = true;
+            }
+            if (cmd.hasOption("usage_after")) {
+                Config.usageAfterMode = true;
             }
         } catch (ParseException e) {
             System.out.println(e.getMessage());
