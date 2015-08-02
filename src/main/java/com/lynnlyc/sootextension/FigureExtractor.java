@@ -12,7 +12,6 @@ import soot.jimple.*;
 import soot.jimple.Stmt;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.BriefUnitGraph;
-import soot.toolkits.graph.pdg.HashMutablePDG;
 import soot.toolkits.scalar.*;
 
 import java.util.HashSet;
@@ -171,81 +170,110 @@ public class FigureExtractor {
 
                     // consider field def-use relationships
                     for (Unit u : body.getUnits()) {
-                        for (ValueBox useBox : u.getUseBoxes()) {
-                            Value value = useBox.getValue();
-                            if (value instanceof FieldRef) {
-                                // if this stmt used a field
-                                // get all usages of this stmt, and add field-use edges
-                                Vertex v_used_field = Vertex.getVertexAndAddToScope(
-                                        g, methodScope, ((FieldRef) value).getField());
-                                HashSet<UnitValueBoxPair> allUses = new HashSet<>();
-                                getAllUsesOf(u, allUses, localUses);
+                        if (!(u instanceof AbstractDefinitionStmt)) continue;
+                        AbstractDefinitionStmt s = (AbstractDefinitionStmt) u;
+                        Value rOp = s.getRightOp();
+                        if (rOp instanceof FieldRef) {
+                            // if this stmt used a field
+                            // get all usages of this stmt, and add field-use edges
+                            Vertex v_source = Vertex.getVertexAndAddToScope(
+                                    g, methodScope, ((FieldRef) rOp).getField());
+                            HashSet<UnitValueBoxPair> allUses = new HashSet<>();
+                            getAllUsesOf(u, allUses, localUses);
 
-                                for (UnitValueBoxPair u_vb : allUses) {
-                                    Unit u_use = u_vb.getUnit();
-                                    if (!(u_use instanceof Stmt))
-                                        continue;
-                                    Stmt s_use = (Stmt) u_use;
-
-                                    Value v_use = u_vb.getValueBox().getValue();
-                                    if (s_use instanceof JAssignStmt) {
-                                        Value leftOpValue = ((JAssignStmt) s_use).getLeftOp();
-                                        if (leftOpValue instanceof FieldRef) {
-                                            Vertex v_def_field = Vertex.getVertexAndAddToScope(
-                                                    g, methodScope, ((FieldRef) value).getField());
-                                            new Edge(g, Edge.TYPE_DEFINE_USE_FIELD_FIELD,
-                                                    v_used_field, v_def_field);
-                                        }
+                            for (UnitValueBoxPair u_vb : allUses) {
+                                Unit u_use = u_vb.getUnit();
+                                Value value_use = u_vb.getValueBox().getValue();
+                                if (u_use instanceof JAssignStmt) {
+                                    Value lOp = ((JAssignStmt) u_use).getLeftOp();
+                                    if (lOp instanceof FieldRef) {
+                                        Vertex v_target = Vertex.getVertexAndAddToScope(
+                                                g, methodScope, ((FieldRef) lOp).getField());
+                                        new Edge(g, Edge.TYPE_DEFINE_USE_FIELD_TO_FIELD,
+                                                v_source, v_target);
                                     }
-                                    else if (s_use instanceof JReturnStmt) {
-                                        new Edge(g, Edge.TYPE_DEFINE_USE_FILED_RET,
-                                                v_used_field, v_method);
-                                    }
-                                    if (s_use.containsInvokeExpr()) {
-                                        InvokeExpr invoke_expr = s_use.getInvokeExpr();
-                                        Vertex v_invoked = Vertex.getVertexAndAddToScope(
-                                                g, methodScope, invoke_expr.getMethod());
-                                        int para_idx = invoke_expr.getArgs().indexOf(v_use);
-                                        if (para_idx < 0) continue;
-                                        new Edge(g, Edge.TYPE_DEFINE_USE_FIELD_PARA + para_idx,
-                                                v_used_field, v_invoked);
-                                    }
+                                }
+                                else if (u_use instanceof JReturnStmt) {
+                                    new Edge(g, Edge.TYPE_DEFINE_USE_FILED_TO_RET,
+                                            v_source, v_method);
+                                }
+                                if (((Stmt)u_use).containsInvokeExpr()) {
+                                    InvokeExpr invoke_expr = ((Stmt)u_use).getInvokeExpr();
+                                    Vertex v_invoked = Vertex.getVertexAndAddToScope(
+                                            g, methodScope, invoke_expr.getMethod());
+                                    int para_idx = invoke_expr.getArgs().indexOf(value_use);
+                                    if (para_idx < 0) continue;
+                                    new Edge(g, Edge.TYPE_DEFINE_USE_FIELD_TO_PARA + para_idx,
+                                            v_source, v_invoked);
                                 }
                             }
                         }
+                        else if (rOp instanceof InvokeExpr) {
+                            // if this stmt invoked a method
+                            // get all usages of this stmt, and add method-use edges
+                            Vertex v_source = Vertex.getVertexAndAddToScope(
+                                    g, methodScope, ((InvokeExpr) rOp).getMethod());
+                            HashSet<UnitValueBoxPair> allUses = new HashSet<>();
+                            getAllUsesOf(u, allUses, localUses);
 
-                        for (ValueBox defBox : u.getDefBoxes()) {
-                            Value value = defBox.getValue();
-                            if (value instanceof FieldRef) {
-                                // if this stmt defined a field
-                                // get all defs of this stmt, and add field-def edges
-                                Vertex v_defined_field = Vertex.getVertexAndAddToScope(
-                                        g, methodScope, ((FieldRef) value).getField());
-                                HashSet<Unit> allDefs = new HashSet<>();
-                                getAllDefsOf(u, allDefs, localDefs);
-
-                                for (Unit u_def : allDefs) {
-                                    if (!(u_def instanceof Stmt))
-                                        continue;
-                                    Stmt s_def = (Stmt) u_def;
-
-                                    if (s_def instanceof JIdentityStmt) {
-                                        Value rOp = ((JIdentityStmt) s_def).getRightOp();
-                                        if (rOp instanceof ParameterRef) {
-                                            int para_idx = ((ParameterRef) rOp).getIndex();
-                                            new Edge(g, Edge.TYPE_DEFINE_USE_PARA_FIELD + para_idx,
-                                                    v_method, v_defined_field);
-                                        }
+                            for (UnitValueBoxPair u_vb : allUses) {
+                                Unit u_use = u_vb.getUnit();
+                                Value value_use = u_vb.getValueBox().getValue();
+                                if (u_use instanceof JAssignStmt) {
+                                    Value lOp = ((JAssignStmt) u_use).getLeftOp();
+                                    if (lOp instanceof FieldRef) {
+                                        Vertex v_target = Vertex.getVertexAndAddToScope(
+                                                g, methodScope, ((FieldRef) lOp).getField());
+                                        new Edge(g, Edge.TYPE_DEFINE_USE_RET_TO_FILED,
+                                                v_source, v_target);
                                     }
-                                    else if (s_def instanceof JInvokeStmt) {
-                                        Value rOp = ((JIdentityStmt) s_def).getRightOp();
-                                        if (rOp instanceof InvokeExpr) {
-                                            Vertex v_invoked = Vertex.getVertexAndAddToScope(
-                                                    g, methodScope, ((InvokeExpr) rOp).getMethod());
-                                            new Edge(g, Edge.TYPE_DEFINE_USE_RET_FILED,
-                                                    v_invoked, v_defined_field);
-                                        }
+                                }
+                                else if (u_use instanceof JReturnStmt) {
+                                    new Edge(g, Edge.TYPE_DEFINE_USE_RET_TO_RET,
+                                            v_source, v_method);
+                                }
+                                if (((Stmt)u_use).containsInvokeExpr()) {
+                                    InvokeExpr invoke_expr = ((Stmt)u_use).getInvokeExpr();
+                                    Vertex v_target = Vertex.getVertexAndAddToScope(
+                                            g, methodScope, invoke_expr.getMethod());
+                                    int para_idx = invoke_expr.getArgs().indexOf(value_use);
+                                    if (para_idx < 0) continue;
+                                    new Edge(g, Edge.TYPE_DEFINE_USE_RET_TO_PARA + para_idx,
+                                            v_source, v_target);
+                                }
+                            }
+                        }
+                        else if (rOp instanceof ParameterRef) {
+                            // if this stmt refer a parameter
+                            // get all usages of this stmt, and add para-use edges
+                            int source_para_idx = ((ParameterRef) rOp).getIndex();
+                            HashSet<UnitValueBoxPair> allUses = new HashSet<>();
+                            getAllUsesOf(u, allUses, localUses);
+
+                            for (UnitValueBoxPair u_vb : allUses) {
+                                Unit u_use = u_vb.getUnit();
+                                Value value_use = u_vb.getValueBox().getValue();
+                                if (u_use instanceof JAssignStmt) {
+                                    Value lOp = ((JAssignStmt) u_use).getLeftOp();
+                                    if (lOp instanceof FieldRef) {
+                                        Vertex v_target = Vertex.getVertexAndAddToScope(
+                                                g, methodScope, ((FieldRef) lOp).getField());
+                                        new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_FIELD + source_para_idx,
+                                                v_method, v_target);
                                     }
+                                }
+                                else if (u_use instanceof JReturnStmt) {
+                                    new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_RET,
+                                            v_method, v_method);
+                                }
+                                if (((Stmt)u_use).containsInvokeExpr()) {
+                                    InvokeExpr invoke_expr = ((Stmt)u_use).getInvokeExpr();
+                                    Vertex v_target = Vertex.getVertexAndAddToScope(
+                                            g, methodScope, invoke_expr.getMethod());
+                                    int target_para_idx = invoke_expr.getArgs().indexOf(value_use);
+                                    if (target_para_idx < 0) continue;
+                                    new Edge(g, Edge.TYPE_DEFINE_USE_PARA_TO_PARA + source_para_idx + "_" + target_para_idx,
+                                            v_method, v_target);
                                 }
                             }
                         }
