@@ -67,13 +67,13 @@ def run(mapping_file, apks_file, out_file=None, start_id=None):
             print apk_releases[key1].keys()
 
     for key in mapping_apk_dict.keys():
-        out_file.write("mkdir ./%d\n" % start_id)
-        out_file.write("cp %s ./%d/mapping.txt\n" % (key.strip(), start_id))
-        out_file.write("cp %s ./%d/app-debug.apk\n" % (mapping_apk_dict[key]["debug"].strip(), start_id))
-        out_file.write("cp %s ./%d/app-release.apk\n" % (mapping_apk_dict[key]["release"].strip(), start_id))
-        out_file.write("echo %s >> ./%d/app_path.txt\n" % (key.strip(), start_id))
-        out_file.write("echo %s >> ./%d/app_path.txt\n" % (mapping_apk_dict[key]["debug"].strip(), start_id))
-        out_file.write("echo %s >> ./%d/app_path.txt\n" % (mapping_apk_dict[key]["release"].strip(), start_id))
+        out_file.write("mkdir ./collected/%d\n" % start_id)
+        out_file.write("cp %s ./collected/%d/mapping.txt\n" % (key.strip(), start_id))
+        out_file.write("cp %s ./collected/%d/app-debug.apk\n" % (mapping_apk_dict[key]["debug"].strip(), start_id))
+        out_file.write("cp %s ./collected/%d/app-release.apk\n" % (mapping_apk_dict[key]["release"].strip(), start_id))
+        out_file.write("echo %s >> ./collected/%d/app_path.txt\n" % (key.strip(), start_id))
+        out_file.write("echo %s >> ./collected/%d/app_path.txt\n" % (mapping_apk_dict[key]["debug"].strip(), start_id))
+        out_file.write("echo %s >> ./collected/%d/app_path.txt\n" % (mapping_apk_dict[key]["release"].strip(), start_id))
 
         start_id += 1
 
@@ -161,11 +161,15 @@ def read_apks(apks_file):
 
 
 def safe_put_with_check(data_dict, key1, key2, value):
-    assert isinstance(data_dict, dict)
-    if key1 not in data_dict.keys():
-        data_dict[key1] = {}
-    assert key2 not in data_dict[key1].keys()
-    data_dict[key1][key2] = value
+    try:
+        assert isinstance(data_dict, dict)
+        if key1 not in data_dict.keys():
+            data_dict[key1] = {}
+        assert key2 not in data_dict[key1].keys()
+        data_dict[key1][key2] = value
+    except AssertionError as e:
+        print "AssertionError! " + e.message
+        print key1, key2, value
 
 
 def safe_get(data_dict, key1, key2):
