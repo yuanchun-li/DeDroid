@@ -180,11 +180,11 @@ def run(dataset_dir, output_dir,
             fApkPredictList.write(apkID + '\n')
         fApkPredictList.close()
 
-        # runTrain(dataset_dir, dataList[:-predictLen], currentPassPath,
-        #          path_to_unuglifyDEX, path_to_nice2predict)
-        #
-        # runPredict(dataset_dir, dataList[-predictLen:], currentPassPath,
-        #            path_to_unuglifyDEX, path_to_nice2predict)
+        runTrain(dataset_dir, dataList[:-predictLen], currentPassPath,
+                 path_to_unuglifyDEX, path_to_nice2predict)
+
+        runPredict(dataset_dir, dataList[-predictLen:], currentPassPath,
+                   path_to_unuglifyDEX, path_to_nice2predict)
 
         # roll
         dataList = dataList[-predictLen:] + dataList[:-predictLen]
