@@ -171,6 +171,8 @@ def run(dataset_dir, output_dir,
     os.system('rm -rf %s/runTestResult' % output_dir)
     os.system('mkdir %s/runTestResult' % output_dir)
     while iLoop > 0:
+        print "pass: %d\ntrain: %s\npredict: %s\n" % \
+            (11 - iLoop, ",".join(dataList[:-predictLen]), ",".join(dataList[-predictLen:]))
         currentPassPath = '%s/runTestResult/pass_%s' % (output_dir, 11 - iLoop)
 
         os.system('mkdir %s' % currentPassPath)
