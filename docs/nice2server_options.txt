@@ -1,0 +1,113 @@
+ Flags from /home/liyc/tools/nice2predict/Nice2Predict/src/inference/graph_inference.cpp:
+    -graph_loopy_bp_passes (Number of loopy belief propagation passes for
+      inference) type: int32 default: 0
+    -graph_loopy_bp_steps_per_pass (Number of loopy belief propagation steps in
+      each inference pass) type: int32 default: 3
+    -graph_per_arc_passes (Number of per-arc passes for inference) type: int32
+      default: 2
+    -graph_per_node_passes (Number of per-node passes for inference)
+      type: int32 default: 6
+    -skip_per_arc_optimization_for_nodes_above_degree (Skip the per-arc
+      optimization pass if an edge is connected to a node with the in+out
+      degree more than the given value) type: int32 default: 32
+    -valid_labels (A file describing valid names) type: string
+      default: "valid_names.txt"
+
+
+
+  Flags from /home/liyc/tools/nice2predict/Nice2Predict/src/server/main.cpp:
+    -num_threads (Number of serving threads) type: int32 default: 8
+    -port (JSON-RPC Server port) type: int32 default: 5745
+
+  Flags from /home/liyc/tools/nice2predict/Nice2Predict/src/server/nice2server.cpp:
+    -logfile_prefix (File where to log all requests and responses) type: string
+      default: ""
+    -model (Input model files) type: string default: "model"
+    -model_version (Version of the current model) type: string default: ""
+
+
+
+  Flags from src/gflags.cc:
+    -flagfile (load flags from file) type: string default: ""
+    -fromenv (set flags from the environment [use 'export FLAGS_flag1=value'])
+      type: string default: ""
+    -tryfromenv (set flags from the environment if present) type: string
+      default: ""
+    -undefok (comma-separated list of flag names that it is okay to specify on
+      the command line even if the program does not define a flag with that
+      name.  IMPORTANT: flags in this list that have arguments MUST use the
+      flag=value format) type: string default: ""
+
+  Flags from src/gflags_completions.cc:
+    -tab_completion_columns (Number of columns to use in output for tab
+      completion) type: int32 default: 80
+    -tab_completion_word (If non-empty, HandleCommandLineCompletions() will
+      hijack the process and attempt to do bash-style command line flag
+      completion on this value.) type: string default: ""
+
+  Flags from src/gflags_reporting.cc:
+    -help (show help on all flags [tip: all flags can have two dashes])
+      type: bool default: false currently: true
+    -helpfull (show help on all flags -- same as -help) type: bool
+      default: false
+    -helpmatch (show help on modules whose name contains the specified substr)
+      type: string default: ""
+    -helpon (show help on the modules named by this flag value) type: string
+      default: ""
+    -helppackage (show help on all modules in the main package) type: bool
+      default: false
+    -helpshort (show help on only the main module for this program) type: bool
+      default: false
+    -helpxml (produce an xml version of help) type: bool default: false
+    -version (show version and build info and exit) type: bool default: false
+
+  Flags from src/logging.cc:
+    -alsologtoemail (log messages go to these email addresses in addition to
+      logfiles) type: string default: ""
+    -alsologtostderr (log messages go to stderr in addition to logfiles)
+      type: bool default: false
+    -colorlogtostderr (color messages logged to stderr (if supported by
+      terminal)) type: bool default: false
+    -drop_log_memory (Drop in-memory buffers of log contents. Logs can grow
+      very quickly and they are rarely read before they need to be evicted from
+      memory. Instead, drop them from memory as soon as they are flushed to
+      disk.) type: bool default: true
+    -log_backtrace_at (Emit a backtrace when logging at file:linenum.)
+      type: string default: ""
+    -log_dir (If specified, logfiles are written into this directory instead of
+      the default logging directory.) type: string default: ""
+    -log_link (Put additional links to the log files in this directory)
+      type: string default: ""
+    -log_prefix (Prepend the log prefix to the start of each log line)
+      type: bool default: true
+    -logbuflevel (Buffer log messages logged at this level or lower (-1 means
+      don't buffer; 0 means buffer INFO only; ...)) type: int32 default: 0
+    -logbufsecs (Buffer log messages for at most this many seconds) type: int32
+      default: 30
+    -logemaillevel (Email log messages logged at this level or higher (0 means
+      email all; 3 means email FATAL only; ...)) type: int32 default: 999
+    -logmailer (Mailer used to send logging email) type: string
+      default: "/bin/mail"
+    -logtostderr (log messages go to stderr instead of logfiles) type: bool
+      default: false
+    -max_log_size (approx. maximum log file size (in MB). A value of 0 will be
+      silently overridden to 1.) type: int32 default: 1800
+    -minloglevel (Messages logged at a lower level than this don't actually get
+      logged anywhere) type: int32 default: 0
+    -stderrthreshold (log messages at or above this level are copied to stderr
+      in addition to logfiles.  This flag obsoletes --alsologtostderr.)
+      type: int32 default: 2
+    -stop_logging_if_full_disk (Stop attempting to log to disk if the disk is
+      full.) type: bool default: false
+
+  Flags from src/utilities.cc:
+    -symbolize_stacktrace (Symbolize the stack trace in the tombstone)
+      type: bool default: true
+
+  Flags from src/vlog_is_on.cc:
+    -v (Show all VLOG(m) messages for m <= this. Overridable by --vmodule.)
+      type: int32 default: 0
+    -vmodule (per-module verbose level. Argument is a comma-separated list of
+      <module name>=<log level>. <module name> is a glob pattern, matched
+      against the filename base (that is, name ignoring .cc/.h./-inl.h). <log
+      level> overrides any value given by --v.) type: string default: ""

@@ -102,8 +102,9 @@ def runPredict(dataset_dir, dataList, output_dir,
     pwd = os.popen('pwd').read().split('\n')[0]
 
     os.chdir(path_to_nice2predict)
-    server_args = ['bin/server/nice2server', '-logtostderr', '-v', '1', '-graph_loopy_bp_passes', '10']
-    serverP = subprocess.Popen(server_args)
+    server_args = ["bin/server/nice2server", "-logtostderr", "-graph_loopy_bp_passes", "5", "-v", "2"]
+    serverP = subprocess.Popen(server_args, stderr=subprocess.PIPE)
+    read_until(serverP.stderr, "started")
     os.chdir(pwd)
 
     apkList = map(lambda x: dataset_dir + '/' + x + '/app-release.apk', dataList)
@@ -117,6 +118,7 @@ def runPredict(dataset_dir, dataList, output_dir,
 
         (retVal, dexLog) = commands.getstatusoutput("java -jar %s -i %s -o %s %s" %
                                                     (path_to_unuglifyDEX, apk, output_dir, sdkPara))
+        print retVal, dexLog
 
         resultMapPath = os.popen('ls %s/UnuglifyDex_PREDICT*/mapping.txt' % output_dir).read().split('\n')[0]
         originMapPath = dataset_dir + '/' + dataList[iCount] + '/mapping.txt'
@@ -134,10 +136,26 @@ def runPredict(dataset_dir, dataList, output_dir,
         os.system('rm %s/predict_result.txt' % output_dir)
         os.system('rm %s/proguard_result.txt' % output_dir)
 
+        server_logs = read_until(serverP.stderr, "End score")
+
+        f = open("%s/server_log_%s.log" % (output_dir, dataList[iCount]), 'w')
+        f.writelines(server_logs)
+        f.close()
+
         iCount = iCount + 1
 
     # serverP.terminate()
     serverP.kill()
+
+
+def read_until(stream_file, token):
+    lines = []
+    while True:
+        line = stream_file.readline()
+        lines.append(line)
+        if token in line:
+            break
+    return lines
 
 
 def run(dataset_dir, output_dir,
@@ -162,14 +180,14 @@ def run(dataset_dir, output_dir,
             fApkPredictList.write(apkID + '\n')
         fApkPredictList.close()
 
-        runTrain(dataset_dir, dataList[:-predictLen], currentPassPath,
-                 path_to_unuglifyDEX, path_to_nice2predict)
-
-        runPredict(dataset_dir, dataList[-predictLen:], currentPassPath,
-                   path_to_unuglifyDEX, path_to_nice2predict)
+        # runTrain(dataset_dir, dataList[:-predictLen], currentPassPath,
+        #          path_to_unuglifyDEX, path_to_nice2predict)
+        #
+        # runPredict(dataset_dir, dataList[-predictLen:], currentPassPath,
+        #            path_to_unuglifyDEX, path_to_nice2predict)
 
         # roll
-        dataList = dataList[:-predictLen] + dataList[-predictLen:]
+        dataList = dataList[-predictLen:] + dataList[:-predictLen]
         iLoop -= 1
 
 

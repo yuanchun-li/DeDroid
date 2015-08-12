@@ -27,7 +27,7 @@ public class Predictor {
         JSONArray mockResultJson = originJson;
 
         generateMapping(g, mockResultJson);
-        evaluateResult(originJson, mockResultJson);
+//        evaluateResult(originJson, mockResultJson);
     }
 
     public static void predict(Graph g) {
@@ -58,7 +58,6 @@ public class Predictor {
                 // Modified to insert a evaluation pass
                 JSONObject originObject = g.toJson();
                 JSONArray originJson = (JSONArray) originObject.get("assign");
-
                 evaluateResult(originJson, resultJson);
             }
             else

@@ -5,11 +5,14 @@ import com.lynnlyc.Util;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
+import soot.options.Options;
 
+import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.logging.Level;
 
 /**
  * Created by LiYC on 2015/7/25.
@@ -162,5 +165,16 @@ public class ObfuscationDetector {
             ps.println(String.format("%s -- %f", cls, classObfuscationRates.get(cls)));
         }
         ps.println(String.format("\nOverall: %f", obfuscationRate));
+    }
+
+    public static void main(String[] args) {
+        Util.LOGGER.setLevel(Level.OFF);
+        if (!Config.parseArgs(args)) {
+            return;
+        }
+
+        Config.init();
+
+        System.out.println("Obfuscation Rate = " + ObfuscationDetector.v().obfuscationRate);
     }
 }
