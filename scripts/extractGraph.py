@@ -5,8 +5,13 @@ import commands
 import argparse
 import random
 import subprocess
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import gaussian_kde
+from scipy.stats import linregress
+import matplotlib.cm as cm
 
-def run(dataset_dir, output_dir):
+def run(dataset_dir, output_dir, print_graph):
     # clear
     reportPrecisionList = []
     logScoreList = []
@@ -52,7 +57,27 @@ def run(dataset_dir, output_dir):
         fSave.write(str(num) + ' ')
     fSave.write('\n')
     fSave.close()
+    if print_graph:
+        draw_graph(logScoreList, reportPrecisionList)
 
+def draw_graph(x, y):
+    """
+    draw graph of x, y
+    """
+    slope, intercept, r_value, p_value, std_err = linregress(x,y)
+    print "slope:%f\nintercept:%f\ncorrelation coefficient:%f\np-value:%f\n" % (slope, intercept, r_value, p_value)
+    fit_f = lambda xs: [slope * x + intercept for x in xs]
+    # fit_f is now a function which takes in x and returns an estimate for y
+
+    xy = np.vstack([x,y])
+    z = gaussian_kde(xy)(xy)
+
+    fig, ax = plt.subplots()
+    ax.scatter(x, y, c=z, s=100, edgecolor='', cmap=plt.cm.Reds)
+    ax.plot(x, y, " ", x, fit_f(x), '--k', ms=5)
+    plt.xlabel("match score")
+    plt.ylabel("precision")
+    plt.show()
 
 def parse_args():
     """
@@ -62,8 +87,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="transform result data for plot")
     parser.add_argument("-i", action="store", dest="dataset_dir",
                         required=True, help="directory of test results (/path/to/runTestResult)")
-    parser.add_argument("-o", action="store", dest="output_dir",
-                        required=True, help="directory of test results")
+    parser.add_argument("-o", action="store", dest="output_file",
+                        required=True, help="output file of result")
+    parser.add_argument("-graph", action="store_true", dest="print_graph", 
+    	          help="if given, print the regression graph.")
     options = parser.parse_args()
     print options
     return options
@@ -75,8 +102,7 @@ def main():
     """
     opts = parse_args()
 
-    run(opts.dataset_dir,
-        opts.output_dir)
+    run(opts.dataset_dir, opts.output_file, opts.print_graph)
 
     return
 

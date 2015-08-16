@@ -102,7 +102,7 @@ def runPredict(dataset_dir, dataList, output_dir,
     pwd = os.popen('pwd').read().split('\n')[0]
 
     os.chdir(path_to_nice2predict)
-    server_args = ["bin/server/nice2server", "-logtostderr", "-graph_loopy_bp_passes", "5", "-v", "2"]
+    server_args = ["bin/server/nice2server", "-logtostderr", "-graph_loopy_bp_passes", "0", "-v", "2"]
     serverP = subprocess.Popen(server_args, stderr=subprocess.PIPE)
     read_until(serverP.stderr, "started")
     os.chdir(pwd)
