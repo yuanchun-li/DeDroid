@@ -54,9 +54,13 @@ public class Config {
 
     private static PrintStream resultPs;
 
-    public static boolean defUseMode = true;
-    public static boolean usageOrderMode = false;
-    public static boolean usageAfterMode = false;
+    public static boolean enable_oo = true;
+    public static boolean enable_type = true;
+    public static boolean enable_modifier = true;
+    public static boolean enable_def_use = true;
+    public static boolean enable_call_ret = true;
+    public static boolean enable_usage_order = false;
+    public static boolean enable_usage_after = false;
 
     public static boolean parseArgs(String[] args) {
         org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
@@ -73,9 +77,22 @@ public class Config {
                 .longOpt("android-sdk").hasArg().desc("path to android.jar").build();
         Option server = Option.builder("server").argName("url").hasArg()
                 .desc("Nice2Predict server address, default http://localhost:5745").build();
-        Option disableDUOpt = new Option("no_du", "disable def-use analysis");
-        Option usageOrderOpt = new Option("usage_order", "do usage-order analysis");
-        Option usageAfterOpt = new Option("usage_after", "do usage-after analysis");
+
+        Option OOOpt = Option.builder("enable_oo").argName("true or false").hasArg()
+                .desc("enable Object-Oriented-language-specific relations" +
+                        "default is true").build();
+        Option TYOpt = Option.builder("enable_type").argName("true or false").hasArg()
+                .desc("enable type relations, default is true").build();
+        Option MDOpt = Option.builder("enable_modifier").argName("true or false").hasArg()
+                .desc("enable modifier relations, default is true").build();
+        Option DUOpt = Option.builder("enable_def_use").argName("true or false").hasArg()
+                .desc("enable def-use relations, default is true").build();
+        Option CROpt = Option.builder("enable_call_ret").argName("true or false").hasArg()
+                .desc("enable call-ret analysis, default is true").build();
+        Option UOOpt = Option.builder("enable_usage_order").argName("true or false").hasArg()
+                .desc("enable usage-order analysis, default is false").build();
+        Option UAOpt = Option.builder("enable_usage_after").argName("true or false").hasArg()
+                .desc("enable usage-after analysis, default is false").build();
 
         options.addOption(quiet);
         options.addOption(debug);
@@ -85,9 +102,13 @@ public class Config {
         options.addOption(library);
         options.addOption(sdk);
         options.addOption(server);
-        options.addOption(disableDUOpt);
-        options.addOption(usageOrderOpt);
-        options.addOption(usageAfterOpt);
+
+        options.addOption(OOOpt);
+        options.addOption(TYOpt);
+        options.addOption(MDOpt);
+        options.addOption(DUOpt);
+        options.addOption(CROpt);
+        options.addOption(UOOpt);
 
         CommandLineParser parser = new DefaultParser();
 
@@ -139,15 +160,70 @@ public class Config {
                     throw new ParseException("Server url error. " + e.getMessage());
                 }
             }
-            if (cmd.hasOption("no_du")) {
-                Config.defUseMode = false;
+            if (cmd.hasOption("enable_oo")) {
+                String opt = cmd.getOptionValue("enable_oo").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_oo = true;
+                else if ("false".equals(opt))
+                    Config.enable_oo = false;
+                else
+                    throw new ParseException("enable_oo option receives true or false, not " + opt);
             }
-            if (cmd.hasOption("usage_order")) {
-                Config.usageOrderMode = true;
+            if (cmd.hasOption("enable_type")) {
+                String opt = cmd.getOptionValue("enable_type").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_type = true;
+                else if ("false".equals(opt))
+                    Config.enable_type = false;
+                else
+                    throw new ParseException("enable_type option receives true or false, not " + opt);
             }
-            if (cmd.hasOption("usage_after")) {
-                Config.usageAfterMode = true;
+            if (cmd.hasOption("enable_modifier")) {
+                String opt = cmd.getOptionValue("enable_modifier").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_modifier = true;
+                else if ("false".equals(opt))
+                    Config.enable_modifier = false;
+                else
+                    throw new ParseException("enable_modifier option receives true or false, not " + opt);
             }
+            if (cmd.hasOption("enable_call_ret")) {
+                String opt = cmd.getOptionValue("enable_call_ret").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_call_ret = true;
+                else if ("false".equals(opt))
+                    Config.enable_call_ret = false;
+                else
+                    throw new ParseException("enable_call_ret option receives true or false, not " + opt);
+            }
+            if (cmd.hasOption("enable_def_use")) {
+                String opt = cmd.getOptionValue("enable_def_use").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_def_use = true;
+                else if ("false".equals(opt))
+                    Config.enable_def_use = false;
+                else
+                    throw new ParseException("enable_def_use option receives true or false, not " + opt);
+            }
+            if (cmd.hasOption("enable_usage_order")) {
+                String opt = cmd.getOptionValue("enable_usage_order").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_usage_order = true;
+                else if ("false".equals(opt))
+                    Config.enable_usage_order = false;
+                else
+                    throw new ParseException("enable_usage_order option receives true or false, not " + opt);
+            }
+            if (cmd.hasOption("enable_usage_after")) {
+                String opt = cmd.getOptionValue("enable_usage_after").toLowerCase();
+                if ("true".equals(opt))
+                    Config.enable_usage_after = true;
+                else if ("false".equals(opt))
+                    Config.enable_usage_after = false;
+                else
+                    throw new ParseException("enable_usage_after option receives true or false, not " + opt);
+            }
+
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             HelpFormatter formatter = new HelpFormatter();

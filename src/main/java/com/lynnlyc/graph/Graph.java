@@ -86,11 +86,28 @@ public class Graph {
                 return o1.source.id - o2.source.id;
             }
         });
+
+        ArrayList<Edge> distinct_edges = new ArrayList<>();
         Edge prev_edge = null;
         for (Edge edge : dup_edges) {
             if (edge.equals(prev_edge)) continue;
-            edges.add(edge);
+            distinct_edges.add(edge);
             prev_edge = edge;
+        }
+
+        HashSet<String> usage_order_strs = new HashSet<>();
+        for (Edge edge : distinct_edges) {
+            if (!edge.type.equals(Edge.TYPE_USE_ORDER)) continue;
+            if (usage_order_strs.contains(edge.getT2Sstr()))
+                usage_order_strs.remove(edge.getT2Sstr());
+            else usage_order_strs.add(edge.getS2Tstr());
+        }
+
+        for (Edge edge : distinct_edges) {
+            if (edge.type.equals(Edge.TYPE_USE_ORDER) &&
+                    !usage_order_strs.contains(edge.getS2Tstr()))
+                continue;
+            edges.add(edge);
         }
     }
 

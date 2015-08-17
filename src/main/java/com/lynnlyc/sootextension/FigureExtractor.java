@@ -169,7 +169,7 @@ public class FigureExtractor {
                     SimpleLocalUses localUses = new SimpleLocalUses(body, localDefs);
 
                     // consider def-use relationships
-                    if (Config.defUseMode) {
+                    if (Config.enable_def_use) {
                         for (Unit u : body.getUnits()) {
                             if (!(u instanceof AbstractDefinitionStmt)) continue;
                             AbstractDefinitionStmt s = (AbstractDefinitionStmt) u;
@@ -278,7 +278,7 @@ public class FigureExtractor {
                     }
 
                     // consider field/method usage order
-                    if (Config.usageOrderMode) {
+                    if (Config.enable_usage_order) {
                         UsageOrderAnalysis uoa = new UsageOrderAnalysis(ug);
                         for (Unit u : body.getUnits()) {
                             Vertex v_usage = null;
@@ -305,7 +305,7 @@ public class FigureExtractor {
                         }
                     }
                     // consider usage after relationships
-                    if (Config.usageAfterMode) {
+                    if (Config.enable_usage_after) {
                         continue;
                     }
                 } catch (Exception e) {
