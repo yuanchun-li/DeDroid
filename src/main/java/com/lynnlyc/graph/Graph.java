@@ -169,6 +169,7 @@ public class Graph {
     }
 
     public void restoreUnknownFromJson(JSONArray resultJson) {
+        Util.LOGGER.info("Restoring unknown label from results.");
         HashMap<Integer, Vertex> id2VertexMap = new HashMap<>();
         for (Vertex v : this.vertexMap.values())
             id2VertexMap.put(v.id, v);

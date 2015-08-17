@@ -8,3 +8,4 @@ dependency-reduced-pom.xml
 src/main/java/META-INF
 examples/cmd-line-backup.txt
 scripts/temp
+examples

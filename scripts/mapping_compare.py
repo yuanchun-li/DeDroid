@@ -59,24 +59,24 @@ class ObfuscationMapping(object):
                 continue
             m = RE_FIELD_LINE.search(line)
             if m:
-                assert current_cls_id is not None
+                # assert current_cls_id is not None
                 field_type, origin_name, obfus_name = \
                     m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
                 if origin_name == obfus_name:
                     continue
                 field_id = self._get_unique_field_id(current_cls_id, obfus_name, field_type)
-                assert field_id not in self.field_mapping.keys()
+                # assert field_id not in self.field_mapping.keys()
                 self.field_mapping[field_id] = origin_name
                 continue
             m = RE_METHOD_LINE.search(line)
             if m:
-                assert current_cls_id is not None
+                # assert current_cls_id is not None
                 ret_type, origin_name, param_types, obfus_name = \
                     m.group(1).strip(), m.group(2).strip(), m.group(3).strip(), m.group(4).strip()
                 if origin_name == obfus_name:
                     continue
                 method_id = self._get_unique_method_id(current_cls_id, obfus_name, param_types)
-                assert method_id not in self.method_mapping.keys()
+                # assert method_id not in self.method_mapping.keys()
                 self.method_mapping[method_id] = origin_name
 
     def _add_class_map(self, class_origin, class_obfus):
