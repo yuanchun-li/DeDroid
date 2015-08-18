@@ -10,6 +10,7 @@ import numpy as np
 from scipy.stats import gaussian_kde
 from scipy.stats import linregress
 import matplotlib.cm as cm
+import matplotlib.colors as colors
 
 def run(dataset_dir, output_dir, print_graph):
     # clear
@@ -69,15 +70,21 @@ def draw_graph(x, y):
     fit_f = lambda xs: [slope * x + intercept for x in xs]
     # fit_f is now a function which takes in x and returns an estimate for y
 
+    # draw with scatter
     xy = np.vstack([x,y])
     z = gaussian_kde(xy)(xy)
-
     fig, ax = plt.subplots()
-    ax.scatter(x, y, c=z, s=100, edgecolor='', cmap=plt.cm.Reds)
+    ax.scatter(x, y, c=z, s=80, edgecolor='', cmap=plt.cm.Blues, marker=u'o', norm=colors.LogNorm())
     ax.plot(x, y, " ", x, fit_f(x), '--k', ms=5)
     plt.xlabel("match score")
     plt.ylabel("precision")
     plt.show()
+
+    # draw with hist2d
+    # plt.hist2d(x, y, (30, 30), cmap=plt.cm.jet)
+    # plt.plot(x, y, " ", x, fit_f(x), '--k', ms=5)
+    # plt.colorbar()
+    # plt.show()
 
 def parse_args():
     """

@@ -2,13 +2,14 @@ __author__ = 'liyc'
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 
 def gen_cdf(sample):
     plt.xlabel("Obfuscation Rate")
     plt.ylabel("CDF")
 
-    plt.hist(sample, bins=1000, cumulative=True, normed=True, histtype="stepfilled")
+    plt.hist(sample, bins=10000, cumulative=True, normed=True, histtype="step", lw=2, ls='solid')
     plt.show()
 
 
