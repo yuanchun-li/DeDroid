@@ -56,9 +56,9 @@ public class Predictor {
                 generateMapping(g, resultJson);
 
                 // Modified to insert a evaluation pass
-                JSONObject originObject = g.toJson();
-                JSONArray originJson = (JSONArray) originObject.get("assign");
-                evaluateResult(originJson, resultJson);
+//                JSONObject originObject = g.toJson();
+//                JSONArray originJson = (JSONArray) originObject.get("assign");
+//                evaluateResult(originJson, resultJson);
             }
             else
                 Util.LOGGER.warning(response.getError().getMessage());
