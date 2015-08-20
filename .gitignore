@@ -10,3 +10,4 @@ examples/cmd-line-backup.txt
 scripts/temp
 examples
 *.DS_STORE
+.gitignore
