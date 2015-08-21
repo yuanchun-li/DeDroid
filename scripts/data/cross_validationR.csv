@@ -1,0 +1,6 @@
+item,	precision_equal,	recall_equal,	precision_substr, recall_substr
+packages,	60.22%,	60.26%,	61.72%,	61.76%
+classes,	48.62%,	49.06%,	79.57%,	80.28%
+fields,	60.75%,	61.82%,	68.74%,	69.96%
+methods,	55.73%,	56.74%,	73.89%,	75.23%
+overall,	56.73%,	57.68%,	72.65%,	73.87%
