@@ -11,9 +11,19 @@ OPTIONS = [
     "-enable_oo",
     "-enable_type",
     "-enable_modifier",
-    "-enable_def_use",
     "-enable_call_ret",
+    "-enable_def_use",
     "-enable_usage_order"
+]
+
+
+COMBINATIONS = [
+    0b100000,
+    0b110000,
+    0b111000,
+    0b111100,
+    0b111110,
+    0b111111,
 ]
 
 
@@ -175,16 +185,15 @@ def run(dataset_dir, output_dir,
     dataList = processDataSet(dataset_dir)
     dataLen = len(dataList)
     predictLen = dataLen / 10
-    iLoop = 1
-    iLoopLimit = 31
 
     os.system('rm -rf %s/runTestResult' % output_dir)
     os.system('mkdir %s/runTestResult' % output_dir)
-    while iLoop < iLoopLimit:
+    for iLoop in COMBINATIONS:
         featurePara = get_feature_para(iLoop)
-        print "pass: %d\ntrain: %s\npredict: %s\nfeature options: %s\n" % \
-            (iLoop, ",".join(dataList[:-predictLen]), ",".join(dataList[-predictLen:]), featurePara)
-        currentPassPath = '%s/runTestResult/pass_%s' % (output_dir, iLoop)
+        iLoop_str = "{0:06b}".format(iLoop)
+        print "pass: %s\ntrain: %s\npredict: %s\nfeature options: %s\n" % \
+            (iLoop_str, ",".join(dataList[:-predictLen]), ",".join(dataList[-predictLen:]), featurePara)
+        currentPassPath = '%s/runTestResult/pass_%s' % (output_dir, iLoop_str)
 
         os.system('mkdir %s' % currentPassPath)
 
@@ -205,14 +214,13 @@ def run(dataset_dir, output_dir,
 
         # roll
         # dataList = dataList[-predictLen:] + dataList[:-predictLen]
-        iLoop += 1
 
 
 def get_feature_para(iLoop):
-    iLoop_bin_str = "{0:5b}".format(iLoop)
+    iLoop_bin_str = "{0:06b}".format(iLoop)
     i = 0
     featurePara = []
-    while i < 5:
+    while i < 6:
         option = OPTIONS[i]
         choice = "true" if iLoop_bin_str[i] == '1' else "false"
         featurePara.append(option)
@@ -235,7 +243,7 @@ def parse_args():
                         required=True, help="path to unuglifyDEX.jar")
     parser.add_argument("-s", action="store", dest="path_to_nice2predict",
                         required=True, help="path to nice2predict root")
-    parser.add_argument("--sdk", action="store", dest="path_to_androidjar",
+    parser.add_argument("-sdk", action="store", dest="path_to_androidjar",
                         required=True, help="path to android.jar")
     parser.add_argument("--loop", action="store_true",
                         help="loop the dataset 10 times")
