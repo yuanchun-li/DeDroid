@@ -1,0 +1,504 @@
+{
+  "performance": {
+    "110000": {
+      "predict_cost_average": 4.847222222222222, 
+      "predict_count": 72, 
+      "training_cost": 2422, 
+      "predict_cost_total": 349, 
+      "predict_cost_max": 14
+    }, 
+    "111111": {
+      "predict_cost_average": 14.597222222222221, 
+      "predict_count": 72, 
+      "training_cost": 50128, 
+      "predict_cost_total": 1051, 
+      "predict_cost_max": 69
+    }, 
+    "111110": {
+      "predict_cost_average": 6.319444444444445, 
+      "predict_count": 72, 
+      "training_cost": 7999, 
+      "predict_cost_total": 455, 
+      "predict_cost_max": 18
+    }, 
+    "111100": {
+      "predict_cost_average": 5.708333333333333, 
+      "predict_count": 72, 
+      "training_cost": 5597, 
+      "predict_cost_total": 411, 
+      "predict_cost_max": 13
+    }, 
+    "100000": {
+      "predict_cost_average": 4.694444444444445, 
+      "predict_count": 72, 
+      "training_cost": 1215, 
+      "predict_cost_total": 338, 
+      "predict_cost_max": 12
+    }, 
+    "111000": {
+      "predict_cost_average": 5.0, 
+      "predict_count": 72, 
+      "training_cost": 2834, 
+      "predict_cost_total": 360, 
+      "predict_cost_max": 14
+    }
+  }, 
+  "result": {
+    "110000": {
+      "common_substr": {
+        "fields": {
+          "recall": 0.37675517864590574, 
+          "predict_count": 22041, 
+          "origin_count": 21579, 
+          "tp": 8130, 
+          "precision": 0.36885803729413363
+        }, 
+        "classes": {
+          "recall": 0.6130169491525423, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 4521, 
+          "precision": 0.6102861771058316
+        }, 
+        "overall": {
+          "recall": 0.49056855295607543, 
+          "predict_count": 61367, 
+          "origin_count": 60012, 
+          "tp": 29440, 
+          "precision": 0.47973666628644057
+        }, 
+        "methods": {
+          "recall": 0.5427819646569647, 
+          "predict_count": 31644, 
+          "origin_count": 30784, 
+          "tp": 16709, 
+          "precision": 0.5280305903172797
+        }, 
+        "packages": {
+          "recall": 0.291970802919708, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 80, 
+          "precision": 0.291970802919708
+        }
+      }, 
+      "equal": {
+        "fields": {
+          "recall": 0.23972380555169379, 
+          "predict_count": 22041, 
+          "origin_count": 21579, 
+          "tp": 5173, 
+          "precision": 0.23469897010117508
+        }, 
+        "classes": {
+          "recall": 0.22752542372881357, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 1678, 
+          "precision": 0.226511879049676
+        }, 
+        "overall": {
+          "recall": 0.2536326068119709, 
+          "predict_count": 61367, 
+          "origin_count": 60012, 
+          "tp": 15221, 
+          "precision": 0.24803233007968453
+        }, 
+        "methods": {
+          "recall": 0.2693931912681913, 
+          "predict_count": 31644, 
+          "origin_count": 30784, 
+          "tp": 8293, 
+          "precision": 0.26207179876121856
+        }, 
+        "packages": {
+          "recall": 0.28102189781021897, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 77, 
+          "precision": 0.28102189781021897
+        }
+      }
+    }, 
+    "111111": {
+      "common_substr": {
+        "fields": {
+          "recall": 0.7761249362806432, 
+          "predict_count": 22445, 
+          "origin_count": 21579, 
+          "tp": 16748, 
+          "precision": 0.7461795500111383
+        }, 
+        "classes": {
+          "recall": 0.8382372881355932, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 6182, 
+          "precision": 0.8345032397408207
+        }, 
+        "overall": {
+          "recall": 0.7902919416116777, 
+          "predict_count": 61829, 
+          "origin_count": 60012, 
+          "tp": 47427, 
+          "precision": 0.7670672338223163
+        }, 
+        "methods": {
+          "recall": 0.7889163201663202, 
+          "predict_count": 31702, 
+          "origin_count": 30784, 
+          "tp": 24286, 
+          "precision": 0.7660715412276828
+        }, 
+        "packages": {
+          "recall": 0.7700729927007299, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 211, 
+          "precision": 0.7700729927007299
+        }
+      }, 
+      "equal": {
+        "fields": {
+          "recall": 0.7109689976365912, 
+          "predict_count": 22445, 
+          "origin_count": 21579, 
+          "tp": 15342, 
+          "precision": 0.683537536199599
+        }, 
+        "classes": {
+          "recall": 0.5346440677966102, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 3943, 
+          "precision": 0.5322624190064795
+        }, 
+        "overall": {
+          "recall": 0.6586349396787309, 
+          "predict_count": 61829, 
+          "origin_count": 60012, 
+          "tp": 39526, 
+          "precision": 0.6392793025926345
+        }, 
+        "methods": {
+          "recall": 0.6507276507276507, 
+          "predict_count": 31702, 
+          "origin_count": 30784, 
+          "tp": 20032, 
+          "precision": 0.6318844236956659
+        }, 
+        "packages": {
+          "recall": 0.7627737226277372, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 209, 
+          "precision": 0.7627737226277372
+        }
+      }
+    }, 
+    "111110": {
+      "common_substr": {
+        "fields": {
+          "recall": 0.737105519254831, 
+          "predict_count": 22442, 
+          "origin_count": 21579, 
+          "tp": 15906, 
+          "precision": 0.7087603600392122
+        }, 
+        "classes": {
+          "recall": 0.8229152542372882, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 6069, 
+          "precision": 0.8192494600431965
+        }, 
+        "overall": {
+          "recall": 0.770379257481837, 
+          "predict_count": 61826, 
+          "origin_count": 60012, 
+          "tp": 46232, 
+          "precision": 0.7477760165626112
+        }, 
+        "methods": {
+          "recall": 0.78125, 
+          "predict_count": 31702, 
+          "origin_count": 30784, 
+          "tp": 24050, 
+          "precision": 0.7586272159485206
+        }, 
+        "packages": {
+          "recall": 0.7554744525547445, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 207, 
+          "precision": 0.7554744525547445
+        }
+      }, 
+      "equal": {
+        "fields": {
+          "recall": 0.6473423235553084, 
+          "predict_count": 22442, 
+          "origin_count": 21579, 
+          "tp": 13969, 
+          "precision": 0.6224489795918368
+        }, 
+        "classes": {
+          "recall": 0.5160677966101694, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 3806, 
+          "precision": 0.5137688984881209
+        }, 
+        "overall": {
+          "recall": 0.6189095514230487, 
+          "predict_count": 61826, 
+          "origin_count": 60012, 
+          "tp": 37142, 
+          "precision": 0.6007504933199624
+        }, 
+        "methods": {
+          "recall": 0.6224987006237006, 
+          "predict_count": 31702, 
+          "origin_count": 30784, 
+          "tp": 19163, 
+          "precision": 0.6044729039177339
+        }, 
+        "packages": {
+          "recall": 0.7445255474452555, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 204, 
+          "precision": 0.7445255474452555
+        }
+      }
+    }, 
+    "111100": {
+      "common_substr": {
+        "fields": {
+          "recall": 0.6865471059826683, 
+          "predict_count": 22440, 
+          "origin_count": 21579, 
+          "tp": 14815, 
+          "precision": 0.660204991087344
+        }, 
+        "classes": {
+          "recall": 0.799864406779661, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 5899, 
+          "precision": 0.7963012958963283
+        }, 
+        "overall": {
+          "recall": 0.7373025394921016, 
+          "predict_count": 61824, 
+          "origin_count": 60012, 
+          "tp": 44247, 
+          "precision": 0.7156929347826086
+        }, 
+        "methods": {
+          "recall": 0.7603300415800416, 
+          "predict_count": 31702, 
+          "origin_count": 30784, 
+          "tp": 23406, 
+          "precision": 0.738313040186739
+        }, 
+        "packages": {
+          "recall": 0.4635036496350365, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 127, 
+          "precision": 0.4635036496350365
+        }
+      }, 
+      "equal": {
+        "fields": {
+          "recall": 0.5569766903007554, 
+          "predict_count": 22440, 
+          "origin_count": 21579, 
+          "tp": 12019, 
+          "precision": 0.5356060606060606
+        }, 
+        "classes": {
+          "recall": 0.48922033898305084, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 3608, 
+          "precision": 0.4870410367170626
+        }, 
+        "overall": {
+          "recall": 0.5625708191694995, 
+          "predict_count": 61824, 
+          "origin_count": 60012, 
+          "tp": 33761, 
+          "precision": 0.5460824275362319
+        }, 
+        "methods": {
+          "recall": 0.5850766632016632, 
+          "predict_count": 31702, 
+          "origin_count": 30784, 
+          "tp": 18011, 
+          "precision": 0.5681345025550438
+        }, 
+        "packages": {
+          "recall": 0.4489051094890511, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 123, 
+          "precision": 0.4489051094890511
+        }
+      }
+    }, 
+    "100000": {
+      "common_substr": {
+        "fields": {
+          "recall": 0.11988507345104037, 
+          "predict_count": 17015, 
+          "origin_count": 21579, 
+          "tp": 2587, 
+          "precision": 0.15204231560387893
+        }, 
+        "classes": {
+          "recall": 0.4888135593220339, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 3605, 
+          "precision": 0.4866360691144708
+        }, 
+        "overall": {
+          "recall": 0.17271545690861828, 
+          "predict_count": 45926, 
+          "origin_count": 60012, 
+          "tp": 10365, 
+          "precision": 0.2256891521142708
+        }, 
+        "methods": {
+          "recall": 0.1349077442827443, 
+          "predict_count": 21229, 
+          "origin_count": 30784, 
+          "tp": 4153, 
+          "precision": 0.19562862122568184
+        }, 
+        "packages": {
+          "recall": 0.072992700729927, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 20, 
+          "precision": 0.072992700729927
+        }
+      }, 
+      "equal": {
+        "fields": {
+          "recall": 0.0418462393994161, 
+          "predict_count": 17015, 
+          "origin_count": 21579, 
+          "tp": 903, 
+          "precision": 0.053070819864825154
+        }, 
+        "classes": {
+          "recall": 0.08298305084745762, 
+          "predict_count": 7408, 
+          "origin_count": 7375, 
+          "tp": 612, 
+          "precision": 0.0826133909287257
+        }, 
+        "overall": {
+          "recall": 0.03176031460374592, 
+          "predict_count": 45926, 
+          "origin_count": 60012, 
+          "tp": 1906, 
+          "precision": 0.041501545965248444
+        }, 
+        "methods": {
+          "recall": 0.012084199584199585, 
+          "predict_count": 21229, 
+          "origin_count": 30784, 
+          "tp": 372, 
+          "precision": 0.017523199397051204
+        }, 
+        "packages": {
+          "recall": 0.06934306569343066, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 19, 
+          "precision": 0.06934306569343066
+        }
+      }
+    }, 
+    "111000": {
+      "common_substr": {
+        "fields": {
+          "recall": 0.43760137170397145, 
+          "predict_count": 22427, 
+          "origin_count": 21579, 
+          "tp": 9443, 
+          "precision": 0.421054978374281
+        }, 
+        "classes": {
+          "recall": 0.7125423728813559, 
+          "predict_count": 7407, 
+          "origin_count": 7375, 
+          "tp": 5255, 
+          "precision": 0.7094640205211287
+        }, 
+        "overall": {
+          "recall": 0.5447077251216423, 
+          "predict_count": 61811, 
+          "origin_count": 60012, 
+          "tp": 32689, 
+          "precision": 0.5288540874601608
+        }, 
+        "methods": {
+          "recall": 0.5801390332640333, 
+          "predict_count": 31703, 
+          "origin_count": 30784, 
+          "tp": 17859, 
+          "precision": 0.5633220830836199
+        }, 
+        "packages": {
+          "recall": 0.48175182481751827, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 132, 
+          "precision": 0.48175182481751827
+        }
+      }, 
+      "equal": {
+        "fields": {
+          "recall": 0.29482367116177766, 
+          "predict_count": 22427, 
+          "origin_count": 21579, 
+          "tp": 6362, 
+          "precision": 0.2836759263387881
+        }, 
+        "classes": {
+          "recall": 0.3296271186440678, 
+          "predict_count": 7407, 
+          "origin_count": 7375, 
+          "tp": 2431, 
+          "precision": 0.32820305116781423
+        }, 
+        "overall": {
+          "recall": 0.3185196294074518, 
+          "predict_count": 61811, 
+          "origin_count": 60012, 
+          "tp": 19115, 
+          "precision": 0.30924916277038067
+        }, 
+        "methods": {
+          "recall": 0.3314384095634096, 
+          "predict_count": 31703, 
+          "origin_count": 30784, 
+          "tp": 10203, 
+          "precision": 0.3218307415701984
+        }, 
+        "packages": {
+          "recall": 0.4343065693430657, 
+          "predict_count": 274, 
+          "origin_count": 274, 
+          "tp": 119, 
+          "precision": 0.4343065693430657
+        }
+      }
+    }
+  }
+}
