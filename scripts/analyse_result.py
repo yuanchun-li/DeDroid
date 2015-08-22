@@ -536,7 +536,7 @@ class CrossValidation(object):
         output_file.write(self.to_json())
 
     def gen_table(self, output_file):
-        seperator = ",\t"
+        seperator = ","
         heads = ["item", "precision_equal", "recall_equal", "precision_substr, recall_substr"]
         output_file.write("%s\n" % seperator.join(heads))
         for key in ["packages", "classes", "fields", "methods", "overall"]:
@@ -596,7 +596,7 @@ class FeatureEvaluation(object):
         output_file.write(self.to_json())
 
     def gen_table(self, output_file):
-        seperator = ",\t"
+        seperator = ","
         heads = ["mode", "training_time(s)", "prediction_time_average(s)", "prediction_time_max(s)",
                  "precision_equal", "recall_equal", "precision_substr, recall_substr"]
         output_file.write("%s\n" % seperator.join(heads))
