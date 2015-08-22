@@ -12,6 +12,7 @@ import numpy as np
 from scipy.stats import gaussian_kde
 from scipy.stats import linregress
 import matplotlib.colors as colors
+import matplotlib
 
 
 def longest_common_substring(s1, s2):
@@ -81,6 +82,8 @@ def draw_graph(x, y, labelx, labely, title):
     """
     draw graph of x, y
     """
+    matplotlib.rcParams.update({'font.size': 20})
+
     slope, intercept, r_value, p_value, std_err = linregress(x,y)
     result = {
         "slope": slope, "intercept": intercept, "r_value": r_value, "p_value": p_value
@@ -98,8 +101,12 @@ def draw_graph(x, y, labelx, labely, title):
     plt.xlabel(labelx)
     plt.ylabel(labely)
 
-    plt.savefig('figure/%s.png' % title, bbox_inches='tight')
-    plt.savefig('figure/%s.pdf' % title, bbox_inches='tight')
+    x1, x2, y1, y2 = plt.axis()
+    plt.axis((x1, x2, 0, 1))
+
+    # plt.show()
+    plt.savefig('figure/%s.png' % title)
+    plt.savefig('figure/%s.pdf' % title)
     return result
 
 
