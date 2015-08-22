@@ -597,13 +597,14 @@ class FeatureEvaluation(object):
 
     def gen_table(self, output_file):
         seperator = ",\t"
-        heads = ["mode", "training_time(s)", "prediction_time(s)",
+        heads = ["mode", "training_time(s)", "prediction_time_average(s)", "prediction_time_max(s)",
                  "precision_equal", "recall_equal", "precision_substr, recall_substr"]
         output_file.write("%s\n" % seperator.join(heads))
         for key in sorted(self.result.keys()):
             values = [key,
                       "%d" % self.performance[key]['training_cost'],
                       "%d" % int(self.performance[key]['predict_cost_average']),
+                      "%d" % int(self.performance[key]['predict_cost_max']),
                       "{0:.2f}%".format(100 * self.result[key]['equal']['overall']['precision']),
                       "{0:.2f}%".format(100 * self.result[key]['equal']['overall']['recall']),
                       "{0:.2f}%".format(100 * self.result[key]['common_substr']['overall']['precision']),
@@ -731,7 +732,7 @@ def parse_args():
                         required=True, help=mode_help)
 
     options = parser.parse_args()
-    print options
+    # print options
     return options
 
 
