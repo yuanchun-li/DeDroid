@@ -537,12 +537,14 @@ class CrossValidation(object):
 
     def gen_table(self, output_file):
         seperator = ","
-        heads = ["item", "precision_equal", "recall_equal", "precision_substr, recall_substr"]
+        heads = ["item", "TP_equal", "precision_equal", "recall_equal", "TP_substr", "precision_substr, recall_substr"]
         output_file.write("%s\n" % seperator.join(heads))
         for key in ["packages", "classes", "fields", "methods", "overall"]:
             values = [key,
+                      "%d" % self.result['overall']['equal'][key]['tp'],
                       "{0:.2f}%".format(100 * self.result['overall']['equal'][key]['precision']),
                       "{0:.2f}%".format(100 * self.result['overall']['equal'][key]['recall']),
+                      "%d" % self.result['overall']['common_substr'][key]['tp'],
                       "{0:.2f}%".format(100 * self.result['overall']['common_substr'][key]['precision']),
                       "{0:.2f}%".format(100 * self.result['overall']['common_substr'][key]['recall'])]
             output_file.write("%s\n" % seperator.join(values))
