@@ -79,8 +79,7 @@ public class Config {
                 .desc("Nice2Predict server address, default http://localhost:5745").build();
 
         Option OOOpt = Option.builder("enable_oo").argName("true or false").hasArg()
-                .desc("enable Object-Oriented-language-specific relations" +
-                        "default is true").build();
+                .desc("enable language-specific relations, default is true").build();
         Option TYOpt = Option.builder("enable_type").argName("true or false").hasArg()
                 .desc("enable type relations, default is true").build();
         Option MDOpt = Option.builder("enable_modifier").argName("true or false").hasArg()
