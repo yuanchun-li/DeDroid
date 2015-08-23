@@ -6,6 +6,7 @@ import re
 import sys
 import json
 import os
+import difflib
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +33,12 @@ def longest_common_substring(s1, s2):
     return s1[x_longest - longest: x_longest]
 
 
+def similarity_ratio(s1, s2):
+    ratio = difflib.SequenceMatcher(a=s1, b=s2).ratio()
+    # print s1, s2, ratio
+    return ratio
+
+
 def safe_divide(a, b):
     if b <= 0:
         return 1
@@ -49,6 +56,13 @@ def safe_add(data_dict, key, num):
         data_dict[key] = num
 
 
+def safe_append(data_dict, key, num):
+    if key in data_dict.keys():
+        data_dict[key].append(num)
+    else:
+        data_dict[key] = [num, ]
+
+
 def safe_max(data_dict, key, num):
     if key in data_dict.keys():
         data_dict[key] = max(data_dict[key], num)
@@ -63,28 +77,42 @@ def safe_get(data_dict, key):
         return 0
 
 
-def sum_in_list(data_list, key1, key2, key3):
-    result = 0
-    count = 0
+def try_get(data_dict, key1, key2=None, key3=None):
+    if key1 not in data_dict.keys():
+        return None
+    value = data_dict[key1]
+    if key2 is None or not isinstance(value, dict):
+        return value
+    if key2 not in value.keys():
+        return None
+    value = value[key2]
+    if key3 is None or not isinstance(value, dict):
+        return value
+    if key3 not in value.keys():
+        return None
+    return value[key3]
+
+
+def sum_in_list(data_list, key1, key2=None, key3=None, start=0):
+    new_list = []
     for item in data_list:
-        if key1 in item.keys() and key2 in item[key1].keys() and key3 in item[key1][key2].keys():
-            value = item[key1][key2][key3]
-            result += value
-            count += 1
-    return result, count
+        value = try_get(item, key1, key2, key3)
+        if value:
+            new_list.append(value)
+    return sum(new_list, start), len(new_list)
 
 
 def average(list_data):
     return reduce(lambda x, y: x + y, list_data) / len(list_data)
 
 
-def draw_graph(x, y, labelx, labely, title):
+def draw_regression(x, y, labelx, labely, title):
     """
     draw graph of x, y
     """
     matplotlib.rcParams.update({'font.size': 20})
 
-    slope, intercept, r_value, p_value, std_err = linregress(x,y)
+    slope, intercept, r_value, p_value, std_err = linregress(x, y)
     result = {
         "slope": slope, "intercept": intercept, "r_value": r_value, "p_value": p_value
     }
@@ -93,7 +121,7 @@ def draw_graph(x, y, labelx, labely, title):
     # fit_f is now a function which takes in x and returns an estimate for y
 
     # draw with scatter
-    xy = np.vstack([x,y])
+    xy = np.vstack([x, y])
     z = gaussian_kde(xy)(xy)
     fig, ax = plt.subplots()
     ax.scatter(x, y, c=z, s=80, edgecolor='', cmap=plt.cm.Blues, marker=u'o', norm=colors.LogNorm())
@@ -110,7 +138,23 @@ def draw_graph(x, y, labelx, labely, title):
     return result
 
 
+def draw_cdf(data, labelx, labely, title):
+    matplotlib.rcParams.update({'font.size': 20})
+
+    plt.xlabel(labelx)
+    plt.ylabel(labely)
+
+    x1, x2, y1, y2 = plt.axis()
+    plt.axis((x1, x2, 0, 1))
+
+    plt.hist(data, bins=10000, cumulative=True, normed=True, histtype="step", lw=2, ls='solid')
+    # plt.show()
+    plt.savefig('figure/%s.png' % title)
+    plt.savefig('figure/%s.pdf' % title)
+
+
 COMMON_SUBSTR_THRESHOLD = 3
+SIMILARITY_RATIO_THRESHOLD = 0.5
 MAPPING_LINE_RE = re.compile('^\[(.)\] .* (.*)/(.*)$')
 
 
@@ -135,6 +179,9 @@ class MappingReport(object):
         self.predict_count = {}
         self.tp_count = {}
         self.substr_tp_count = {}
+        self.similarity_tp_count = {}
+
+        self.similarity_ratios = {}
 
         self._process_file(input_file)
 
@@ -150,6 +197,12 @@ class MappingReport(object):
         self.methods_substr = PredictionItem(self.triple_safe_get_substr_tp('m'))
         self.overall_substr = PredictionItem(self.triple_safe_get_substr_tp('s'))
 
+        self.packages_similarity = PredictionItem(self.triple_safe_get_similarity_tp('p'))
+        self.classes_similarity = PredictionItem(self.triple_safe_get_similarity_tp('c'))
+        self.fields_similarity = PredictionItem(self.triple_safe_get_similarity_tp('f'))
+        self.methods_similarity = PredictionItem(self.triple_safe_get_similarity_tp('m'))
+        self.overall_similarity = PredictionItem(self.triple_safe_get_similarity_tp('s'))
+
     def triple_safe_get_tp(self, flag):
         return (safe_get(self.origin_count, flag),
                 safe_get(self.predict_count, flag),
@@ -159,6 +212,11 @@ class MappingReport(object):
         return (safe_get(self.origin_count, flag),
                 safe_get(self.predict_count, flag),
                 safe_get(self.substr_tp_count, flag))
+
+    def triple_safe_get_similarity_tp(self, flag):
+        return (safe_get(self.origin_count, flag),
+                safe_get(self.predict_count, flag),
+                safe_get(self.similarity_tp_count, flag))
 
     def _process_file(self, input_file):
         input_file_stream = open(input_file, 'r')
@@ -174,12 +232,21 @@ class MappingReport(object):
             if origin == predict:
                 safe_increase(self.tp_count, flag)
                 safe_increase(self.substr_tp_count, flag)
-            elif len(longest_common_substring(origin, predict)) >= COMMON_SUBSTR_THRESHOLD:
-                safe_increase(self.substr_tp_count, flag)
+                safe_increase(self.similarity_tp_count, flag)
+                safe_append(self.similarity_ratios, flag, 1.0)
+            else:
+                ratio = similarity_ratio(origin, predict)
+                safe_append(self.similarity_ratios, flag, ratio)
+                if len(longest_common_substring(origin, predict)) >= COMMON_SUBSTR_THRESHOLD:
+                    safe_increase(self.substr_tp_count, flag)
+                if ratio >= SIMILARITY_RATIO_THRESHOLD:
+                    safe_increase(self.similarity_tp_count, flag)
         self.origin_count['s'] = sum(self.origin_count.values())
         self.predict_count['s'] = sum(self.predict_count.values())
         self.tp_count['s'] = sum(self.tp_count.values())
         self.substr_tp_count['s'] = sum(self.substr_tp_count.values())
+        self.similarity_tp_count['s'] = sum(self.similarity_tp_count.values())
+        self.similarity_ratios['s'] = sum(self.similarity_ratios.values(), [])
 
     def to_dict(self):
         result = {
@@ -196,6 +263,13 @@ class MappingReport(object):
                 "fields": self.fields_substr.to_dict(),
                 "methods": self.methods_substr.to_dict(),
                 "overall": self.overall_substr.to_dict()
+            },
+            "similar": {
+                "packages": self.packages_similarity.to_dict(),
+                "classes": self.classes_similarity.to_dict(),
+                "fields": self.fields_similarity.to_dict(),
+                "methods": self.methods_similarity.to_dict(),
+                "overall": self.overall_similarity.to_dict()
             }
         }
         return result
@@ -206,6 +280,10 @@ class MappingReport(object):
     def dump(self, output_file):
         output_file.write(self.to_json())
 
+    def gen_similarity_ratio_cdf(self, output_file_stream):
+        output_file_stream.write(json.dumps(self.similarity_ratios, indent=2))
+        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio')
+
 
 def analyse_mapping_report(input_file, output_file_stream):
     MappingReport(input_file).dump(output_file_stream)
@@ -214,10 +292,12 @@ def analyse_mapping_report(input_file, output_file_stream):
 class MappingReports(object):
     def __init__(self, input_dir):
         self.result = {}
+        self.similarity_ratios = {}
         self._process_dir(input_dir)
 
     def _process_dir(self, input_dir):
         all_mappings = []
+        all_similarity_ratios = []
         for p, d, filenames in os.walk(input_dir):
             for filename in filenames:
                 m = PREDICTION_REPORT_FILE_RE.match(filename)
@@ -225,8 +305,10 @@ class MappingReports(object):
                     app_id = m.group(1)
                     if app_id not in self.result:
                         self.result[app_id] = {}
-                    self.result[app_id]['mapping'] = MappingReport(os.path.join(p, filename)).to_dict()
+                    mapping_report_for_app = MappingReport(os.path.join(p, filename))
+                    self.result[app_id]['mapping'] = mapping_report_for_app.to_dict()
                     all_mappings.append(self.result[app_id]['mapping'])
+                    all_similarity_ratios.append(mapping_report_for_app.similarity_ratios)
                     continue
                 m = SERVER_LOG_FILE_RE.match(filename)
                 if m:
@@ -249,11 +331,18 @@ class MappingReports(object):
                     value_sum, count = sum_in_list(all_mappings, key1, key2, key3)
                     overall[key1][key2][key3] = value_sum
                 overall[key1][key2]['precision'] = safe_divide(overall[key1][key2]['tp'],
-                                                                overall[key1][key2]['predict_count'])
+                                                               overall[key1][key2]['predict_count'])
                 overall[key1][key2]['recall'] = safe_divide(overall[key1][key2]['tp'],
-                                                             overall[key1][key2]['origin_count'])
+                                                            overall[key1][key2]['origin_count'])
 
         self.result['overall'] = overall
+
+        overall = {}
+        similarity_ratio_sample = all_similarity_ratios[0]
+        for key in similarity_ratio_sample.keys():
+            overall[key], count = sum_in_list(all_similarity_ratios, key, start=[])
+
+        self.similarity_ratios = overall
 
     def to_dict(self):
         return self.result
@@ -264,9 +353,20 @@ class MappingReports(object):
     def dump(self, output_file):
         output_file.write(self.to_json())
 
+    def gen_similarity_ratio_cdf(self, output_file_stream):
+        output_file_stream.write(json.dumps(self.similarity_ratios, indent=2))
+        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio')
+
 
 def analyse_mapping_reports(input_dir, output_file_stream):
     MappingReports(input_dir).dump(output_file_stream)
+
+
+def analyse_similarity_ratio(input_file, output_file_stream):
+    if os.path.isfile(input_file):
+        MappingReport(input_file).gen_similarity_ratio_cdf(output_file_stream)
+    else:
+        MappingReports(input_file).gen_similarity_ratio_cdf(output_file_stream)
 
 
 TEST_LOG_GREP = """
@@ -277,6 +377,8 @@ TRAINING_START_GREP = re.compile('^I([0-9]+) ([0-9:.]+) .* training data samples
 TRAINING_END_GREP = re.compile('^I([0-9]+) ([0-9:.]+) .* Saving model done$')
 PREDICT_START_GREP = re.compile('^.* ([0-9]+), [0-9]+ ([0-9:]+) .* com.lynnlyc.Config init$')
 PREDICT_STOP_GREP = re.compile('^.* ([0-9]+), [0-9]+ ([0-9:]+) .* com.lynnlyc.Predictor evaluateResult$')
+
+
 # MONTH_MAP = {"一月": "01", "二月": "02", "三月": "03", "四月": "04", "五月": "05", "六月": "06",
 #              "七月": "07", "八月": "08", "九月": "09", "十月": "10", "十一月": "11", "十二月": "12"}
 
@@ -425,6 +527,7 @@ class TraningData(object):
 def analyse_training_data(input_file, output_file_stream):
     TraningData(input_file).dump(output_file_stream)
 
+
 PREDICTION_REPORT_FILE_RE = re.compile('prediction_report_(.*).txt')
 SERVER_LOG_FILE_RE = re.compile('server_log_(.*).log')
 
@@ -466,9 +569,9 @@ class SinglePass(object):
                     value_sum, count = sum_in_list(all_mappings, key1, key2, key3)
                     overall[key1][key2][key3] = value_sum
                 overall[key1][key2]['precision'] = safe_divide(overall[key1][key2]['tp'],
-                                                                overall[key1][key2]['predict_count'])
+                                                               overall[key1][key2]['predict_count'])
                 overall[key1][key2]['recall'] = safe_divide(overall[key1][key2]['tp'],
-                                                             overall[key1][key2]['origin_count'])
+                                                            overall[key1][key2]['origin_count'])
 
         self.result['overall'] = overall
 
@@ -480,6 +583,7 @@ class SinglePass(object):
 
     def dump(self, output_file):
         output_file.write(self.to_json())
+
 
 def analyse_1pass(input_dir, output_file_stream):
     SinglePass(input_dir).dump(output_file_stream)
@@ -544,23 +648,27 @@ class CrossValidation(object):
 
     def gen_table(self, output_file):
         seperator = ","
-        heads = ["item", "TP_equal", "precision_equal", "recall_equal", "TP_substr", "precision_substr, recall_substr"]
+        heads = ["item", ]
+        for head in self.result['overall'].keys():
+            heads += ["TP_%s" % head, "precision_%s" % head, "recall_%s" % head]
         output_file.write("%s\n" % seperator.join(heads))
         for key in ["packages", "classes", "fields", "methods", "overall"]:
-            values = [key,
-                      "%d" % self.result['overall']['equal'][key]['tp'],
-                      "{0:.2f}%".format(100 * self.result['overall']['equal'][key]['precision']),
-                      "{0:.2f}%".format(100 * self.result['overall']['equal'][key]['recall']),
-                      "%d" % self.result['overall']['common_substr'][key]['tp'],
-                      "{0:.2f}%".format(100 * self.result['overall']['common_substr'][key]['precision']),
-                      "{0:.2f}%".format(100 * self.result['overall']['common_substr'][key]['recall'])]
+            values = []
+            for head in self.result['overall'].keys():
+                values += [
+                           "%d" % self.result['overall'][head][key]['tp'],
+                           "{0:.2f}%".format(100 * self.result['overall'][head][key]['precision']),
+                           "{0:.2f}%".format(100 * self.result['overall'][head][key]['recall'])]
             output_file.write("%s\n" % seperator.join(values))
+
 
 def analyse_cross_validation(input_dir, output_file_stream):
     CrossValidation(input_dir).dump(output_file_stream)
 
+
 def analyse_cross_validation_result(input_file, output_file_stream):
     CrossValidation(input_file, from_json=True).gen_table(output_file_stream)
+
 
 class FeatureEvaluation(object):
     def __init__(self, input_file, from_json=False):
@@ -606,22 +714,29 @@ class FeatureEvaluation(object):
 
     def gen_table(self, output_file):
         seperator = ","
-        heads = ["mode", "training_time(s)", "prediction_time_average(s)", "prediction_time_max(s)",
-                 "precision_equal", "recall_equal", "precision_substr, recall_substr"]
+        heads = ["mode", "training_time(s)", "prediction_time_average(s)", "prediction_time_max(s)"]
+
+        result_sample = self.result.values()[0]
+        for head in result_sample.keys():
+            heads += ["precision_%s" % head, "recall_%s" % head]
+
         output_file.write("%s\n" % seperator.join(heads))
         for key in sorted(self.result.keys()):
-            values = [key,
-                      "%d" % self.performance[key]['training_cost'],
-                      "%d" % int(self.performance[key]['predict_cost_average']),
-                      "%d" % int(self.performance[key]['predict_cost_max']),
-                      "{0:.2f}%".format(100 * self.result[key]['equal']['overall']['precision']),
-                      "{0:.2f}%".format(100 * self.result[key]['equal']['overall']['recall']),
-                      "{0:.2f}%".format(100 * self.result[key]['common_substr']['overall']['precision']),
-                      "{0:.2f}%".format(100 * self.result[key]['common_substr']['overall']['recall'])]
+            values = [
+                key,
+                "%d" % self.performance[key]['training_cost'],
+                "%d" % int(self.performance[key]['predict_cost_average']),
+                "%d" % int(self.performance[key]['predict_cost_max'])]
+            for head in result_sample.keys():
+                values += [
+                    "{0:.2f}%".format(100 * self.result[key][head]['overall']['precision']),
+                    "{0:.2f}%".format(100 * self.result[key][head]['overall']['recall'])]
             output_file.write("%s\n" % seperator.join(values))
+
 
 def analyse_feature_evaluation(input_dir, output_file_stream):
     FeatureEvaluation(input_dir).dump(output_file_stream)
+
 
 def analyse_feature_evaluation_result(input_file, output_file_stream):
     FeatureEvaluation(input_file, from_json=True).gen_table(output_file_stream)
@@ -660,17 +775,17 @@ class ScoreRegression(object):
 
     def draw_regression_graphs(self):
         self.precisions_equal_regress = \
-            draw_graph(self.scores, self.precisions_equal,
-                       "DeDroid Score", "Precision (equal)", "regression_precisions_equal")
+            draw_regression(self.scores, self.precisions_equal,
+                            "DeDroid Score", "Precision (equal)", "regression_precisions_equal")
         self.recalls_equal_regress = \
-            draw_graph(self.scores, self.recalls_equal,
-                       "DeDroid Score", "Recall (equal)", "regression_recalls_equal")
+            draw_regression(self.scores, self.recalls_equal,
+                            "DeDroid Score", "Recall (equal)", "regression_recalls_equal")
         self.precisions_substr_regress = \
-            draw_graph(self.scores, self.precisions_substr,
-                       "DeDroid Score", "Precision (3-letter common sub-string)", "regression_precisions_substr")
+            draw_regression(self.scores, self.precisions_substr,
+                            "DeDroid Score", "Precision (3-letter common sub-string)", "regression_precisions_substr")
         self.recalls_substr_regress = \
-            draw_graph(self.scores, self.recalls_substr,
-                       "DeDroid Score", "Recall (3-letter common sub-string)", "regression_recalls_substr")
+            draw_regression(self.scores, self.recalls_substr,
+                            "DeDroid Score", "Recall (3-letter common sub-string)", "regression_recalls_substr")
 
     def to_dict(self):
         return self.__dict__
@@ -684,6 +799,42 @@ class ScoreRegression(object):
 
 def score_regression(input_file, output_file_stream):
     ScoreRegression(input_file).dump(output_file_stream)
+
+
+class ObfuscationRates(object):
+    def __init__(self, input_file):
+        self.obfuscation_rates = {}
+        self._process_file(input_file)
+
+    def _process_file(self, input_file):
+        f = open(input_file, 'r')
+        app = None
+        for line in f.readlines():
+            try:
+                num = float(line)
+                assert app is not None
+                self.obfuscation_rates[app] = num
+            except ValueError:
+                app = line[2:-1]
+        for key in self.obfuscation_rates.keys():
+            if "/" in key:
+                self.obfuscation_rates.pop(key)
+
+    def to_dict(self):
+        return self.obfuscation_rates
+
+    def to_json(self):
+        return json.dumps(self.to_dict(), indent=2)
+
+    def dump(self, output_file):
+        output_file.write(self.to_json())
+
+    def gen_cdf(self):
+        draw_cdf(self.obfuscation_rates.values(), 'Obfuscation Rate', 'CDF', 'obfuscation_rate_cdf')
+
+
+def analyse_obfuscation_rates(input_file, output_file_stream):
+    ObfuscationRates(input_file).gen_cdf()
 
 
 def run(input_file, output_file, mode):
@@ -710,6 +861,12 @@ def run(input_file, output_file, mode):
         analyse_cross_validation_result(input_file, output_file_stream)
     elif mode == "feature_evaluationR":
         analyse_feature_evaluation_result(input_file, output_file_stream)
+    elif mode == "similarity_ratio":
+        analyse_similarity_ratio(input_file, output_file_stream)
+    elif mode == "obfuscation_rate":
+        analyse_obfuscation_rates(input_file, output_file_stream)
+    else:
+        print "Unknown mode: " + mode
 
 
 def parse_args():
@@ -729,6 +886,8 @@ def parse_args():
     score_regression    regression analysis with the json generated in mapping_reports mode
     cross_validationR   analyse the json generated in cross_validation, and gen table
     feature_evaluationR analyse the json generated in feature_evaluation, and gen table
+    similarity_ratio    get the cdf for the similarity ratios between deobfuscated names and origins
+    obfuscation_rate    get the cdf for obfuscation rate
     """
 
     parser = argparse.ArgumentParser(description="evaluation data analyser of DeDroid",
