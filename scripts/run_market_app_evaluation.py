@@ -121,19 +121,19 @@ def runPredict(dataset_dir, dataList, output_dir, path_to_androidjar,
                                                     (path_to_unuglifyDEX, apk, output_dir, sdkPara, featurePara))
         print retVal, dexLog
         #
-        # resultMapPath = os.popen('ls %s/UnuglifyDex_PREDICT*/mapping.txt' % output_dir).read().split('\n')[0]
+        resultMapPath = os.popen('ls %s/UnuglifyDex_PREDICT*/mapping.txt' % output_dir).read().split('\n')[0]
         # originMapPath = dataset_dir + '/' + dataList[iCount] + '/mapping.txt'
         #
         # os.system('python mapping_compare.py --proguard %s --predict %s -o %s' %
         #           (originMapPath, resultMapPath, output_dir))
         # # backup mappings.txt
-        # os.system('cp %s %s/predict_mapping_%s.txt' % (resultMapPath, output_dir, dataList[iCount]))
+        os.system('cp %s %s/predict_mapping_%s.txt' % (resultMapPath, output_dir, dataList[iCount]))
         # os.system('cp %s %s/proguard_mapping_%s.txt' % (originMapPath, output_dir, dataList[iCount]))
         #
         # os.system('mv %s/compare_report.txt %s/prediction_report_%s.txt' %
         #           (output_dir, output_dir, dataList[iCount]))
         #
-        # os.system('rm -rf %s/UnuglifyDex_PREDICT*' % output_dir)
+        os.system('rm -rf %s/UnuglifyDex_PREDICT*' % output_dir)
         # os.system('rm %s/predict_result.txt' % output_dir)
         # os.system('rm %s/proguard_result.txt' % output_dir)
 
