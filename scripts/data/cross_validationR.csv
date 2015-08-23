@@ -1,6 +1,6 @@
-item,TP_equal,precision_equal,recall_equal,TP_substr,precision_substr, recall_substr
-packages,1962,60.22%,60.26%,2011,61.72%,61.76%
-classes,41235,48.62%,49.06%,67478,79.57%,80.28%
-fields,159047,60.75%,61.82%,179977,68.74%,69.96%
-methods,210214,55.73%,56.74%,278733,73.89%,75.23%
-overall,412458,56.73%,57.68%,528199,72.65%,73.87%
+item,TP_common_substr,precision_common_substr,recall_common_substr,TP_similar,precision_similar,recall_similar,TP_equal,precision_equal,recall_equal
+packages,2011,61.72%,61.76%,2018,61.94%,61.98%,1962,60.22%,60.26%
+classes,67478,79.57%,80.28%,56375,66.48%,67.07%,41235,48.62%,49.06%
+fields,179977,68.74%,69.96%,174648,66.71%,67.89%,159047,60.75%,61.82%
+methods,278733,73.89%,75.23%,250155,66.32%,67.52%,210214,55.73%,56.74%
+overall,528199,72.65%,73.87%,483196,66.46%,67.57%,412458,56.73%,57.68%

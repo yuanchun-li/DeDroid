@@ -110,6 +110,7 @@ def draw_regression(x, y, labelx, labely, title):
     """
     draw graph of x, y
     """
+    plt.clf()
     matplotlib.rcParams.update({'font.size': 20})
 
     slope, intercept, r_value, p_value, std_err = linregress(x, y)
@@ -139,6 +140,7 @@ def draw_regression(x, y, labelx, labely, title):
 
 
 def draw_cdf(data, labelx, labely, title):
+    plt.clf()
     matplotlib.rcParams.update({'font.size': 20})
 
     plt.xlabel(labelx)
@@ -174,13 +176,14 @@ class PredictionItem(object):
 
 
 class MappingReport(object):
-    def __init__(self, input_file):
+    def __init__(self, input_file, enable_similarity_ratio_cdf=False):
         self.origin_count = {}
         self.predict_count = {}
         self.tp_count = {}
         self.substr_tp_count = {}
         self.similarity_tp_count = {}
 
+        self.enable_similarity_ratio_cdf = enable_similarity_ratio_cdf
         self.similarity_ratios = {}
 
         self._process_file(input_file)
@@ -233,10 +236,12 @@ class MappingReport(object):
                 safe_increase(self.tp_count, flag)
                 safe_increase(self.substr_tp_count, flag)
                 safe_increase(self.similarity_tp_count, flag)
-                safe_append(self.similarity_ratios, flag, 1.0)
+                if self.enable_similarity_ratio_cdf:
+                    safe_append(self.similarity_ratios, flag, 1.0)
             else:
                 ratio = similarity_ratio(origin, predict)
-                safe_append(self.similarity_ratios, flag, ratio)
+                if self.enable_similarity_ratio_cdf:
+                    safe_append(self.similarity_ratios, flag, ratio)
                 if len(longest_common_substring(origin, predict)) >= COMMON_SUBSTR_THRESHOLD:
                     safe_increase(self.substr_tp_count, flag)
                 if ratio >= SIMILARITY_RATIO_THRESHOLD:
@@ -246,7 +251,8 @@ class MappingReport(object):
         self.tp_count['s'] = sum(self.tp_count.values())
         self.substr_tp_count['s'] = sum(self.substr_tp_count.values())
         self.similarity_tp_count['s'] = sum(self.similarity_tp_count.values())
-        self.similarity_ratios['s'] = sum(self.similarity_ratios.values(), [])
+        if self.enable_similarity_ratio_cdf:
+            self.similarity_ratios['s'] = sum(self.similarity_ratios.values(), [])
 
     def to_dict(self):
         result = {
@@ -282,7 +288,11 @@ class MappingReport(object):
 
     def gen_similarity_ratio_cdf(self, output_file_stream):
         output_file_stream.write(json.dumps(self.similarity_ratios, indent=2))
-        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio')
+        draw_cdf(self.similarity_ratios['p'], 'Similarity Ratio', 'CDF', 'similarity_ratio_package')
+        draw_cdf(self.similarity_ratios['c'], 'Similarity Ratio', 'CDF', 'similarity_ratio_classes')
+        draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods')
+        draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields')
+        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall')
 
 
 def analyse_mapping_report(input_file, output_file_stream):
@@ -290,8 +300,9 @@ def analyse_mapping_report(input_file, output_file_stream):
 
 
 class MappingReports(object):
-    def __init__(self, input_dir):
+    def __init__(self, input_dir, enable_similarity_ratio_cdf = False):
         self.result = {}
+        self.enable_similarity_ratio_cdf = enable_similarity_ratio_cdf
         self.similarity_ratios = {}
         self._process_dir(input_dir)
 
@@ -305,10 +316,11 @@ class MappingReports(object):
                     app_id = m.group(1)
                     if app_id not in self.result:
                         self.result[app_id] = {}
-                    mapping_report_for_app = MappingReport(os.path.join(p, filename))
+                    mapping_report_for_app = MappingReport(os.path.join(p, filename), self.enable_similarity_ratio_cdf)
                     self.result[app_id]['mapping'] = mapping_report_for_app.to_dict()
                     all_mappings.append(self.result[app_id]['mapping'])
-                    all_similarity_ratios.append(mapping_report_for_app.similarity_ratios)
+                    if self.enable_similarity_ratio_cdf:
+                        all_similarity_ratios.append(mapping_report_for_app.similarity_ratios)
                     continue
                 m = SERVER_LOG_FILE_RE.match(filename)
                 if m:
@@ -337,12 +349,13 @@ class MappingReports(object):
 
         self.result['overall'] = overall
 
-        overall = {}
-        similarity_ratio_sample = all_similarity_ratios[0]
-        for key in similarity_ratio_sample.keys():
-            overall[key], count = sum_in_list(all_similarity_ratios, key, start=[])
+        if self.enable_similarity_ratio_cdf:
+            overall = {}
+            similarity_ratio_sample = all_similarity_ratios[0]
+            for key in similarity_ratio_sample.keys():
+                overall[key], count = sum_in_list(all_similarity_ratios, key, start=[])
 
-        self.similarity_ratios = overall
+            self.similarity_ratios = overall
 
     def to_dict(self):
         return self.result
@@ -355,7 +368,11 @@ class MappingReports(object):
 
     def gen_similarity_ratio_cdf(self, output_file_stream):
         output_file_stream.write(json.dumps(self.similarity_ratios, indent=2))
-        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio')
+        draw_cdf(self.similarity_ratios['p'], 'Similarity Ratio', 'CDF', 'similarity_ratio_package')
+        draw_cdf(self.similarity_ratios['c'], 'Similarity Ratio', 'CDF', 'similarity_ratio_classes')
+        draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods')
+        draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields')
+        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall')
 
 
 def analyse_mapping_reports(input_dir, output_file_stream):
@@ -364,9 +381,9 @@ def analyse_mapping_reports(input_dir, output_file_stream):
 
 def analyse_similarity_ratio(input_file, output_file_stream):
     if os.path.isfile(input_file):
-        MappingReport(input_file).gen_similarity_ratio_cdf(output_file_stream)
+        MappingReport(input_file, True).gen_similarity_ratio_cdf(output_file_stream)
     else:
-        MappingReports(input_file).gen_similarity_ratio_cdf(output_file_stream)
+        MappingReports(input_file, True).gen_similarity_ratio_cdf(output_file_stream)
 
 
 TEST_LOG_GREP = """
@@ -653,7 +670,7 @@ class CrossValidation(object):
             heads += ["TP_%s" % head, "precision_%s" % head, "recall_%s" % head]
         output_file.write("%s\n" % seperator.join(heads))
         for key in ["packages", "classes", "fields", "methods", "overall"]:
-            values = []
+            values = [key, ]
             for head in self.result['overall'].keys():
                 values += [
                            "%d" % self.result['overall'][head][key]['tp'],
