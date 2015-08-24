@@ -139,17 +139,27 @@ def draw_regression(x, y, labelx, labely, title):
     return result
 
 
-def draw_cdf(data, labelx, labely, title):
+def draw_cdf(data, labelx, labely, title, invert_x=False):
     plt.clf()
     matplotlib.rcParams.update({'font.size': 20})
 
     plt.xlabel(labelx)
     plt.ylabel(labely)
 
-    x1, x2, y1, y2 = plt.axis()
-    plt.axis((x1, x2, 0, 1))
+    # x1, x2, y1, y2 = plt.axis()
+    # plt.axis((x1, x2, 0, 1))
 
-    plt.hist(data, bins=10000, cumulative=True, normed=True, histtype="step", lw=2, ls='solid')
+    sorted_data = np.sort(data)
+    yvals = np.arange(len(sorted_data))/float(len(sorted_data))
+
+    if invert_x:
+        yvals = yvals[::-1]
+        plt.gca().invert_xaxis()
+
+    plt.plot(sorted_data, yvals, lw=2, ls='solid')
+    # plt.show()
+    # plt.hist(data, bins=10000, cumulative=True, normed=True, histtype="step", lw=2, ls='solid')
+
     # plt.show()
     plt.savefig('figure/%s.png' % title)
     plt.savefig('figure/%s.pdf' % title)
@@ -288,11 +298,11 @@ class MappingReport(object):
 
     def gen_similarity_ratio_cdf(self, output_file_stream):
         output_file_stream.write(json.dumps(self.similarity_ratios, indent=2))
-        draw_cdf(self.similarity_ratios['p'], 'Similarity Ratio', 'CDF', 'similarity_ratio_package')
-        draw_cdf(self.similarity_ratios['c'], 'Similarity Ratio', 'CDF', 'similarity_ratio_classes')
-        draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods')
-        draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields')
-        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall')
+        draw_cdf(self.similarity_ratios['p'], 'Similarity Ratio', 'CDF', 'similarity_ratio_package', invert_x=True)
+        draw_cdf(self.similarity_ratios['c'], 'Similarity Ratio', 'CDF', 'similarity_ratio_classes', invert_x=True)
+        draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods', invert_x=True)
+        draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields', invert_x=True)
+        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall', invert_x=True)
 
 
 def analyse_mapping_report(input_file, output_file_stream):
@@ -368,11 +378,11 @@ class MappingReports(object):
 
     def gen_similarity_ratio_cdf(self, output_file_stream):
         output_file_stream.write(json.dumps(self.similarity_ratios, indent=2))
-        draw_cdf(self.similarity_ratios['p'], 'Similarity Ratio', 'CDF', 'similarity_ratio_package')
-        draw_cdf(self.similarity_ratios['c'], 'Similarity Ratio', 'CDF', 'similarity_ratio_classes')
-        draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods')
-        draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields')
-        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall')
+        draw_cdf(self.similarity_ratios['p'], 'Similarity Ratio', 'CDF', 'similarity_ratio_package', invert_x=True)
+        draw_cdf(self.similarity_ratios['c'], 'Similarity Ratio', 'CDF', 'similarity_ratio_classes', invert_x=True)
+        draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods', invert_x=True)
+        draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields', invert_x=True)
+        draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall', invert_x=True)
 
 
 def analyse_mapping_reports(input_dir, output_file_stream):
@@ -762,14 +772,12 @@ def analyse_feature_evaluation_result(input_file, output_file_stream):
 class ScoreRegression(object):
     def __init__(self, input_file):
         self.scores = []
-        self.precisions_equal = []
-        self.recalls_equal = []
-        self.precisions_substr = []
-        self.recalls_substr = []
-        self.precisions_equal_regress = {}
-        self.recalls_equal_regress = {}
-        self.precisions_substr_regress = {}
-        self.recalls_substr_regress = {}
+        self.precisions = {}
+        self.recalls = {}
+        self.precisions_regress = {}
+        self.recalls_regress = {}
+        self.heads = []
+        self.tag = os.path.basename(input_file).split('.')[0]
         self._process_file(input_file)
         self.draw_regression_graphs()
 
@@ -778,31 +786,30 @@ class ScoreRegression(object):
         data = json.load(input_file_stream)
 
         data.pop('overall')
+
+        mapping_sample = data.values()[0]['mapping']
+        self.heads = mapping_sample.keys()
+
         for key in data.keys():
             score = data[key]['score']['dedroid_score']
-            precision_equal = data[key]['mapping']['equal']['overall']['precision']
-            recall_equal = data[key]['mapping']['equal']['overall']['recall']
-            precision_substr = data[key]['mapping']['common_substr']['overall']['precision']
-            recall_substr = data[key]['mapping']['common_substr']['overall']['recall']
             self.scores.append(score)
-            self.precisions_equal.append(precision_equal)
-            self.recalls_equal.append(recall_equal)
-            self.precisions_substr.append(precision_substr)
-            self.recalls_substr.append(recall_substr)
+            for head in self.heads:
+                precision = data[key]['mapping'][head]['overall']['precision']
+                recall = data[key]['mapping'][head]['overall']['recall']
+                safe_append(self.precisions, head, precision)
+                safe_append(self.recalls, head, recall)
+        input_file_stream.close()
 
     def draw_regression_graphs(self):
-        self.precisions_equal_regress = \
-            draw_regression(self.scores, self.precisions_equal,
-                            "DeDroid Score", "Precision (equal)", "regression_precisions_equal")
-        self.recalls_equal_regress = \
-            draw_regression(self.scores, self.recalls_equal,
-                            "DeDroid Score", "Recall (equal)", "regression_recalls_equal")
-        self.precisions_substr_regress = \
-            draw_regression(self.scores, self.precisions_substr,
-                            "DeDroid Score", "Precision (3-letter common sub-string)", "regression_precisions_substr")
-        self.recalls_substr_regress = \
-            draw_regression(self.scores, self.recalls_substr,
-                            "DeDroid Score", "Recall (3-letter common sub-string)", "regression_recalls_substr")
+        for head in self.heads:
+            self.precisions_regress[head] = \
+                draw_regression(self.scores, self.precisions[head],
+                                "DeDroid Score", "Precision (%s)" % head,
+                                "regression_precisions_%s_%s" % (head, self.tag))
+            self.recalls_regress[head] = \
+                draw_regression(self.scores, self.recalls[head],
+                                "DeDroid Score", "Recall (%s)" % head,
+                                "regression_recalls_%s_%s" % (head, self.tag))
 
     def to_dict(self):
         return self.__dict__
@@ -854,6 +861,104 @@ def analyse_obfuscation_rates(input_file, output_file_stream):
     ObfuscationRates(input_file).gen_cdf()
 
 
+class ServerLogs(object):
+    def __init__(self, input_dir):
+        self.dedroid_scores = []
+        self._process_dir(input_dir)
+
+    def _process_dir(self, input_dir):
+        for p, d, filenames in os.walk(input_dir):
+            for filename in filenames:
+                m = SERVER_LOG_FILE_RE.match(filename)
+                if m:
+                    score = ServerLog(os.path.join(p, filename)).dedroid_score
+                    self.dedroid_scores.append(score)
+
+    def to_dict(self):
+        return self.__dict__
+
+    def to_json(self):
+        return json.dumps(self.to_dict(), indent=2)
+
+    def dump(self, output_file):
+        output_file.write(self.to_json())
+
+
+class HybridEvaluation(object):
+    def __init__(self, input_dir):
+        self.Tmarket_Pgithub = {}
+        self.Tmarket_Pmarket = {}
+        self.Tgithub_Pgithub = {}
+        self.Tgithub_Pmarket = {}
+        self.github_score_regression = {}
+        self.market_score_regression = {}
+        self._process_dir(input_dir)
+        self.estimate_precisions()
+
+    def _process_dir(self, input_dir):
+        self.Tgithub_Pgithub = MappingReports("%s/pass_train_github_predict_github" % input_dir).to_dict()['overall']
+        self.Tmarket_Pgithub = MappingReports("%s/pass_train_market_predict_github" % input_dir).to_dict()['overall']
+        self.Tgithub_Pmarket = ServerLogs("%s/pass_train_github_predict_market" % input_dir).to_dict()
+        self.Tmarket_Pmarket = ServerLogs("%s/pass_train_market_predict_market" % input_dir).to_dict()
+        temp_file = "temp.json"
+        temp_file_stream = open(temp_file, 'w')
+        analyse_mapping_reports("%s/pass_train_market_predict_github720" % input_dir, temp_file_stream)
+        temp_file_stream.close()
+        self.market_score_regression = ScoreRegression(temp_file).to_dict()
+        self.market_score_regression.pop('tag')
+        self.market_score_regression.pop('precisions')
+        self.market_score_regression.pop('recalls')
+        self.market_score_regression.pop('scores')
+        os.popen("rm %s" % temp_file)
+        os.popen("rm figure/*temp.pdf figure/*temp.png")
+
+        temp_file = "temp.json"
+        temp_file_stream = open(temp_file, 'w')
+        analyse_mapping_reports("%s/pass_train_github_predict_github" % input_dir, temp_file_stream)
+        temp_file_stream.close()
+        self.github_score_regression = ScoreRegression(temp_file).to_dict()
+        self.github_score_regression.pop('tag')
+        self.github_score_regression.pop('precisions')
+        self.github_score_regression.pop('recalls')
+        self.github_score_regression.pop('scores')
+        os.popen("rm %s" % temp_file)
+        os.popen("rm figure/*temp.pdf figure/*temp.png")
+
+    def estimate_precisions(self):
+        for head in self.Tgithub_Pgithub.keys():
+            self.Tgithub_Pmarket[head] = {}
+            for key in ['precision', 'recall']:
+                regress_item = self.github_score_regression["%ss_regress" % key][head]
+                f = lambda x: regress_item['slope'] * x + regress_item['intercept']
+                temp = []
+                for score in self.Tgithub_Pmarket['dedroid_scores']:
+                    temp.append(f(score))
+                self.Tgithub_Pmarket[head][key] = average(temp)
+
+        for head in self.Tmarket_Pgithub.keys():
+            self.Tmarket_Pmarket[head] = {}
+            for key in ['precision', 'recall']:
+                regress_item = self.market_score_regression["%ss_regress" % key][head]
+                f = lambda x: regress_item['slope'] * x + regress_item['intercept']
+                temp = []
+                for score in self.Tmarket_Pmarket['dedroid_scores']:
+                    temp.append(f(score))
+                self.Tmarket_Pmarket[head][key] = average(temp)
+
+    def to_dict(self):
+        return self.__dict__
+
+    def to_json(self):
+        return json.dumps(self.to_dict(), indent=2)
+
+    def dump(self, output_file):
+        output_file.write(self.to_json())
+
+
+def analyse_hybrid_evaluation(input_dir, output_file_stream):
+    HybridEvaluation(input_dir).dump(output_file_stream)
+
+
 def run(input_file, output_file, mode):
     output_file_stream = open(output_file, 'w') if output_file is not None else sys.stdout
     if mode == "mapping_report":
@@ -882,6 +987,8 @@ def run(input_file, output_file, mode):
         analyse_similarity_ratio(input_file, output_file_stream)
     elif mode == "obfuscation_rate":
         analyse_obfuscation_rates(input_file, output_file_stream)
+    elif mode == "hybrid_evaluation":
+        analyse_hybrid_evaluation(input_file, output_file_stream)
     else:
         print "Unknown mode: " + mode
 
@@ -936,3 +1043,46 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+usage_example_mapping_reports = """
+-i
+/home/liyc/apks/unuglifyDEX_dataset/evaluate/result
+-m
+mapping_reports
+-o
+data/mapping_cross_validation.json
+"""
+
+usage_example_score_regression = """
+-i
+data/mapping_cross_validation.json
+-m
+score_regression
+-o
+data/score_regression_cross_validation.json
+"""
+
+usage_example_similarity_ratio = """
+-i
+/home/liyc/apks/unuglifyDEX_dataset/evaluate/result
+-m
+similarity_ratio
+"""
+
+
+usage_example_obfuscation_rate = """
+-i
+data/obfuscation_rates_of_kuan_app.txt
+-m
+obfuscation_rate
+"""
+
+usage_example_hybrid_evaluation = """
+-i
+/home/liyc/apks/unuglifyDEX_dataset/hybrid
+-m
+hybrid_evaluation
+-o
+data/hybrid_evaluation.json
+"""

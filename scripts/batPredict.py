@@ -151,3 +151,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+usage_example_github_apps = """
+python -u batPredict.py -i /home/liyc/apks/unuglifyDEX_dataset/mini_evaluate/apps3 -o /home/liyc/apks/unuglifyDEX_dataset/train/from_google_play_result/runTestResult/pass_github_apps/ -p /home/liyc/project/IdeaProjects/UnuglifyDEX/target/UnuglifyDEX-1.0-SNAPSHOT.jar -sdk /home/liyc/Android/Sdk/platforms/android-22/android.jar -s /home/liyc/tools/nice2predict/Nice2Predict/ -a /home/liyc/apks/unuglifyDEX_dataset/mini_evaluate/app_list.txt -enable_compare 2>&1 | tee /home/liyc/apks/unuglifyDEX_dataset/train/from_google_play_result/runTestResult/predict_market_apps.log
+"""
+
+usage_example_market_apps = """
+python -u batPredict.py -i /home/liyc/apks/unuglifyDEX_dataset/train/from_google_play -o /home/liyc/apks/unuglifyDEX_dataset/train/from_google_play_result/runTestResult/pass_market_apps/ -p /home/liyc/project/IdeaProjects/UnuglifyDEX/target/UnuglifyDEX-1.0-SNAPSHOT.jar -sdk /home/liyc/Android/Sdk/platforms/android-22/android.jar -s /home/liyc/tools/nice2predict/Nice2Predict/ -a /home/liyc/apks/unuglifyDEX_dataset/train/from_google_play_result/predict_app_list.txt 2>&1 | tee /home/liyc/apks/unuglifyDEX_dataset/train/from_google_play_result/runTestResult/predict_market_apps.log
+"""
