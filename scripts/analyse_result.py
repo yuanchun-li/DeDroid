@@ -139,8 +139,10 @@ def draw_regression(x, y, labelx, labely, title):
     return result
 
 
-def draw_cdf(data, labelx, labely, title, invert_x=False):
-    plt.clf()
+def draw_cdf(data, labelx, labely, title, invert_x=False, clear=True):
+    if clear:
+        plt.clf()
+
     matplotlib.rcParams.update({'font.size': 20})
 
     plt.xlabel(labelx)
@@ -232,12 +234,19 @@ class MappingReport(object):
                 safe_get(self.similarity_tp_count, flag))
 
     def _process_file(self, input_file):
+        input_file_name = os.path.basename(input_file)
+        m = PREDICTION_REPORT_FILE_RE.match(input_file_name)
+        app_id = 0
+        if m:
+            app_id = m.group(1)
+
         input_file_stream = open(input_file, 'r')
         for line in input_file_stream.readlines():
             m = MAPPING_LINE_RE.match(line)
             if not m:
                 continue
             flag, origin, predict = m.group(1).lower(), m.group(2), m.group(3)
+
             if origin != "?":
                 safe_increase(self.origin_count, flag)
             if predict != "?":
@@ -250,12 +259,27 @@ class MappingReport(object):
                     safe_append(self.similarity_ratios, flag, 1.0)
             else:
                 ratio = similarity_ratio(origin, predict)
+                common_substr = longest_common_substring(origin, predict)
+                common_substr_len = len(common_substr)
                 if self.enable_similarity_ratio_cdf:
                     safe_append(self.similarity_ratios, flag, ratio)
-                if len(longest_common_substring(origin, predict)) >= COMMON_SUBSTR_THRESHOLD:
+                if common_substr_len >= COMMON_SUBSTR_THRESHOLD:
                     safe_increase(self.substr_tp_count, flag)
+                    # debug: how many common sub-strings are common prefix/suffix
+                    # safe_increase(wtf, 'similar_count')
+                    # if flag == 'c':
+                    #     if origin.lower().endswith(common_substr) and predict.lower().endswith(common_substr):
+                    #         safe_increase(wtf, 'common_suffix')
+                    #     if origin.lower().startswith(common_substr) and predict.lower().startswith(common_substr):
+                    #         safe_increase(wtf, 'common_prefix')
+
                 if ratio >= SIMILARITY_RATIO_THRESHOLD:
                     safe_increase(self.similarity_tp_count, flag)
+                    # debug: common pairs
+                    # if len(origin) + len(predict) < 30:
+                    #     pair = "[%s][%s] %s %s" % (flag, app_id, origin, predict)
+                    #     safe_increase(wtf, pair)
+
         self.origin_count['s'] = sum(self.origin_count.values())
         self.predict_count['s'] = sum(self.predict_count.values())
         self.tp_count['s'] = sum(self.tp_count.values())
@@ -303,6 +327,8 @@ class MappingReport(object):
         draw_cdf(self.similarity_ratios['m'], 'Similarity Ratio', 'CDF', 'similarity_ratio_methods', invert_x=True)
         draw_cdf(self.similarity_ratios['f'], 'Similarity Ratio', 'CDF', 'similarity_ratio_fields', invert_x=True)
         draw_cdf(self.similarity_ratios['s'], 'Similarity Ratio', 'CDF', 'similarity_ratio_overall', invert_x=True)
+
+wtf = {}
 
 
 def analyse_mapping_report(input_file, output_file_stream):
@@ -992,6 +1018,7 @@ def run(input_file, output_file, mode):
     else:
         print "Unknown mode: " + mode
 
+    print json.dumps(wtf, indent=2)
 
 def parse_args():
     """
@@ -1085,4 +1112,14 @@ usage_example_hybrid_evaluation = """
 hybrid_evaluation
 -o
 data/hybrid_evaluation.json
+"""
+
+
+usage_example_single_pass = """
+-i
+/home/liyc/apks/unuglifyDEX_dataset/hybrid/pass_train_market_predict_github720
+-m
+1pass
+-o
+temp/temp.json
 """
