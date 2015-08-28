@@ -8,6 +8,8 @@ dependency-reduced-pom.xml
 src/main/java/META-INF
 examples/cmd-line-backup.txt
 scripts/temp
+scripts/data
+scripts/figure
 examples
 *.DS_STORE
 .gitignore
