@@ -31,4 +31,8 @@ class SubTestTrain extends TestTrain {
         base += value;
         return base;
     }
+
+    public void func2(double a, int b) {
+        int c = b - (int)a;
+    }
 }

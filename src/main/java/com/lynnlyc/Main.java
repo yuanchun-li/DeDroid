@@ -1,6 +1,6 @@
 package com.lynnlyc;
 
-import com.lynnlyc.graph.Graph;
+import com.lynnlyc.derg.core.Graph;
 import com.lynnlyc.sootextension.FigureExtractor;
 
 public class Main {
@@ -27,6 +27,7 @@ public class Main {
 
         FigureExtractor figureExtractor = new FigureExtractor();
         Graph g = figureExtractor.run();
+        test();
         g.dump(Config.getResultPs());
         if (Config.isTraining) {
             Trainer.train(g);
@@ -34,5 +35,9 @@ public class Main {
         else {
             Predictor.predict(g);
         }
+    }
+
+    public static void test() {
+
     }
 }

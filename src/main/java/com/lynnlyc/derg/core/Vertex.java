@@ -1,4 +1,4 @@
-package com.lynnlyc.graph;
+package com.lynnlyc.derg.core;
 
 import com.lynnlyc.Config;
 import com.lynnlyc.Util;

@@ -1,7 +1,7 @@
 package com.lynnlyc.sootextension;
 
 import com.lynnlyc.Config;
-import com.lynnlyc.graph.Graph;
+import com.lynnlyc.derg.core.Graph;
 import soot.*;
 
 import java.io.PrintStream;

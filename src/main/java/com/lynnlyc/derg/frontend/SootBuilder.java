@@ -1,16 +1,19 @@
-package com.lynnlyc.sootextension;
+package com.lynnlyc.derg.frontend;
 
 import com.lynnlyc.Config;
-import com.lynnlyc.Predictor;
 import com.lynnlyc.Util;
 import com.lynnlyc.derg.core.Edge;
 import com.lynnlyc.derg.core.Graph;
 import com.lynnlyc.derg.core.Vertex;
+import com.lynnlyc.sootextension.UsageOrderAnalysis;
 import soot.*;
-import soot.Body;
-import soot.jimple.*;
+import soot.jimple.FieldRef;
+import soot.jimple.InvokeExpr;
+import soot.jimple.ParameterRef;
 import soot.jimple.Stmt;
-import soot.jimple.internal.*;
+import soot.jimple.internal.AbstractDefinitionStmt;
+import soot.jimple.internal.JAssignStmt;
+import soot.jimple.internal.JReturnStmt;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.scalar.*;
 
@@ -18,17 +21,12 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * Created by LiYC on 2015/7/19.
- * Package: UnuglifyDEX
+ * Created by liyc on 12/23/15.
+ * build the DERG of an Android application
  */
-public class FigureExtractor {
+public class SootBuilder {
 
-    public FigureExtractor() {
-        ObfuscationDetector.v();
-    }
-
-    public Graph run() {
-        Util.LOGGER.info("extracting features");
+    public Graph buildFromSoot() {
         if (!Config.isInitialized) {
             Util.LOGGER.warning("Configuration not initialized");
             return null;
@@ -38,9 +36,6 @@ public class FigureExtractor {
 
         Util.LOGGER.info("generating DERG");
         for (SootClass cls : Config.applicationClasses) {
-            if (Config.isTraining && ObfuscationDetector.v().isObfuscated(cls))
-                continue;
-
             String pkgName = cls.getPackageName();
             Vertex v_pkg = Vertex.getLastSegVertex(g, g.root_scope, pkgName);
             HashSet<Vertex> packageScope = g.getScopeByKey(pkgName);
@@ -329,10 +324,8 @@ public class FigureExtractor {
                 }
             }
         }
-        Util.LOGGER.info("finished extracting features");
-        if (!Config.isTraining)
-            Predictor.transform(g);
         g.sortGraph();
+        Util.LOGGER.info("finished building DERG");
         return g;
     }
 

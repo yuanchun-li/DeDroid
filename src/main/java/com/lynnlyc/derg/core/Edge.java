@@ -1,4 +1,4 @@
-package com.lynnlyc.graph;
+package com.lynnlyc.derg.core;
 
 import com.lynnlyc.Config;
 import com.lynnlyc.Util;
@@ -26,6 +26,7 @@ public class Edge {
     public static final String TYPE_INHERIT = "OO_CC_inh";
     public static final String TYPE_OUTER = "OO_CC_outer";
     public static final String TYPE_IMPLEMENT = "OO_CC_impl";
+    public static final String TYPE_OVERRIDE = "OO_MM_override";
 
     // relationships inside class
     public static final String TYPE_FIELD = "OO_CF_has";
