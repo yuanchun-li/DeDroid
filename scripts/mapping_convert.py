@@ -119,9 +119,8 @@ def safe_divide(a, b):
 def parse_args():
     """
     parse command line input
-    generate options including input proguard-generated mappings and predict mappings
     """
-    parser = argparse.ArgumentParser(description="comparing proguard-generated and predict mappings")
+    parser = argparse.ArgumentParser(description="convert proguard-generated mapping file")
     parser.add_argument("-i", action="store", dest="mapping_file",
                         required=True, help="path to proguard-generated mapping.txt")
     parser.add_argument("-o", action="store", dest="new_mapping_file",
