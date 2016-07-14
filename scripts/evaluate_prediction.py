@@ -46,7 +46,7 @@ def run(original_derg, obfuscated_derg, proguard_mapping, infer_result, report_f
         obfuscated_name = obfuscate_sig_2_obfuscate_node[obfuscate_sig]['name']
         predicted_name = obfuscate_sig_2_predicted_name[obfuscate_sig]
         tag = origin_sig_2_origin_node[key]['type'][0]
-        if origin_name == predicted_name and origin_name != "?":
+        if compare(origin_name, predicted_name) and origin_name != "?":
             tag = tag.upper()
             matched += 1
         else:
@@ -67,25 +67,44 @@ def list2dict(infer_list):
             infer_dict[item['v']] = item['inf']
     return infer_dict
 
+COMPARING_POLICY_EXACT = "exact"
+COMPARING_POLICY_SUBSTR = "substr"
+COMPARING_POLICY_SIMILARITY = "similarity"
+DEFAULT_COMPARING_POLICY = COMPARING_POLICY_EXACT
 
-def compare_dict(request_dict, result_dict):
-    report_dict = {}
-    keys = sorted(set(request_dict.keys() + result_dict.keys()))
-    total = len(keys)
-    matched = 0
-    for key in keys:
-        request_value = safe_get(request_dict, key)
-        result_value = safe_get(result_dict, key)
-        if request_value == result_value and result_value != "?":
-            tag = "Y"
-            matched += 1
-        else:
-            tag = "N"
-        report_str = "[%s]%s/%s" % (tag, request_value, result_value)
-        # print report_str
-        report_dict[key] = report_str
-    print "total: %d; matched: %d; precision: %f" % (total, matched, safe_divide(matched, total))
-    return report_dict
+
+def compare(str1, str2):
+    if DEFAULT_COMPARING_POLICY is COMPARING_POLICY_EXACT:
+        return str1 == str2
+    elif DEFAULT_COMPARING_POLICY is COMPARING_POLICY_SUBSTR:
+        return len(longest_common_substring(str1, str2)) >= 3
+    elif DEFAULT_COMPARING_POLICY is COMPARING_POLICY_SIMILARITY:
+        return similarity_ratio(str1, str2) >= 0.6
+    else:
+        print "warning: unknown comparing policy: " + DEFAULT_COMPARING_POLICY
+        return False
+
+def longest_common_substring(s1, s2):
+    s1 = s1.lower()
+    s2 = s2.lower()
+    m = [[0] * (1 + len(s2)) for i in xrange(1 + len(s1))]
+    longest, x_longest = 0, 0
+    for x in xrange(1, 1 + len(s1)):
+        for y in xrange(1, 1 + len(s2)):
+            if s1[x - 1] == s2[y - 1]:
+                m[x][y] = m[x - 1][y - 1] + 1
+                if m[x][y] > longest:
+                    longest = m[x][y]
+                    x_longest = x
+            else:
+                m[x][y] = 0
+    return s1[x_longest - longest: x_longest]
+
+import difflib
+def similarity_ratio(s1, s2):
+    ratio = difflib.SequenceMatcher(a=s1, b=s2).ratio()
+    # print s1, s2, ratio
+    return ratio
 
 def safe_get(data_dict, key):
     if key in data_dict.keys():
