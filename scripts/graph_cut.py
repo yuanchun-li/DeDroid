@@ -19,10 +19,12 @@ def run(input_graph_json_path, output_graph_dir, gpmetis_path, avg_volume):
     output_graph_dir = os.path.abspath(output_graph_dir)
     gpmetis_path = os.path.abspath(gpmetis_path)
 
+    '''
     r = os.system("rm -rf %s/output/" % output_graph_dir)
     if r != 0:
         print "rm failed"
         sys.exit(r)
+    '''
     r = os.system("mkdir -p %s/output/" % output_graph_dir)
     if r != 0:
         print "rm failed"
@@ -38,7 +40,7 @@ def run(input_graph_json_path, output_graph_dir, gpmetis_path, avg_volume):
     metis_fmt_graph = {}
     edge_num = 0
     vertex_num = 0
-    
+
     origin_vertex_list = sorted([vertex["v"] for vertex in input_graph_json["assign"]])
     vertex_map = {}
     for origin_vertex_id in origin_vertex_list:
@@ -46,7 +48,7 @@ def run(input_graph_json_path, output_graph_dir, gpmetis_path, avg_volume):
         vertex_num += 1
 
 
-    for edge in input_graph_json["query"]: 
+    for edge in input_graph_json["query"]:
         if edge.has_key("cn"):
             continue
         if not metis_fmt_graph.has_key(vertex_map[edge["a"]]):
@@ -79,6 +81,10 @@ def run(input_graph_json_path, output_graph_dir, gpmetis_path, avg_volume):
     r = os.system("%s %s/output/origin_graph_metis %s" % (gpmetis_path, output_graph_dir, str(partition_num)))
     if r != 0:
         print "gpmetis failed"
+        sys.exit(r)
+    r = os.system("rm %s/output/origin_graph_metis" % output_graph_dir)
+    if r != 0:
+        print "rm %s/output/origin_graph_metis failed" % output_graph_dir
         sys.exit(r)
 
     vertex_partition_dict = {}
@@ -120,7 +126,12 @@ def run(input_graph_json_path, output_graph_dir, gpmetis_path, avg_volume):
                     if len(inequal_groups[partition_id]) > 1:
                         new_graphs[partition_id]["query"].append({"cn": "!=", "n": inequal_groups[partition_id]})
 
-                
+
+    r = os.system("rm %s/output/origin_graph_metis.part.%s" % (output_graph_dir, str(partition_num)))
+    if r != 0:
+        print "rm %s/output/origin_graph_metis.part.%s failed" % (output_graph_dir, str(partition_num))
+        sys.exit(r)
+
     print "edge_lost: %s" % str(edge_lost)
     output_base_name = input_graph_json_path.split("/")[-1][:-len(".json")]
     for i in range(partition_num):
