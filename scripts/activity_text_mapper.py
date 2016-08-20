@@ -41,25 +41,30 @@ def run(decoded_dir, droidbot_out_dir, output_dir):
             # 1. asdf --> package.asdf
             # 2. .asdf --> package.asdf
             # 3. asdf.asdf --> asdf.asdf
-            # however, the foreground-activity-name in droidbot_outs is the case 3 with asdf/.asdf
-            #
+            # however, the foreground-activity-name in droidbot_outs is the case ???/.asdf where .asdf is shorthand
+
             device_states = filter(lambda x: '.json' in x, os.walk("%s/%s/device_states" % (droidbot_out_dir, package_name)).next()[2])
 
             for device_state in device_states:
                 with open("%s/%s/device_states/%s" % (droidbot_out_dir, package_name, device_state), 'r') as device_state_file:
                     device_state_json = json.load(device_state_file)
-                    current_activity = device_state_json['foreground_activity'].split('/')[-1]
+                    droidbot_activity = device_state_json['foreground_activity'].split('/')[-1]
 
-                    if (current_activity in activity_name_list) or \
-                       (current_activity[0] == '.' and current_activity[1:] in activity_name_list) or \
-                       (''.join(device_state_json['foreground_activity'].split('/')) in activity_name_list):
-                        if current_activity not in activity_text_mapping[package_name].keys():
-                            activity_text_mapping[package_name][current_activity] = []
+                    if droidbot_activity[0] == '.':
+                        full_activity = ''.join(device_state_json['foreground_activity'].split('/'))
+                    else:
+                        full_activity = droidbot_activity
+
+                    if (droidbot_activity in activity_name_list) or \
+                       (droidbot_activity[0] == '.' and droidbot_activity[1:] in activity_name_list) or \
+                       (full_activity in activity_name_list):
+                        if full_activity not in activity_text_mapping[package_name].keys():
+                            activity_text_mapping[package_name][full_activity] = []
                         activity_state = map(
                             lambda x: {"text": x['text'], "rid": x['resource_id'], "class": x['class']},
                             device_state_json['views'])
-                        if activity_state not in activity_text_mapping[package_name][current_activity]:
-                            activity_text_mapping[package_name][current_activity].append(activity_state)
+                        if activity_state not in activity_text_mapping[package_name][full_activity]:
+                            activity_text_mapping[package_name][full_activity].append(activity_state)
         except:
             print "%s failed" % package_name
         count += 1
