@@ -39,6 +39,7 @@ public class ActivityAnalysis {
             while ((line = in.readLine()) != null) {
                 activityTextMappingStr += line;
             }
+            in.close();
         }
         catch (Exception e){
             System.out.println("Reading " + filePath + " failed");
@@ -90,16 +91,57 @@ public class ActivityAnalysis {
 
                 activityMethodExpand.put(activityClass, new HashSet<SootMethod>());
                 activityClassExpand.put(activityClass, new HashSet<SootClass>());
+                HashSet<SootMethod> deltaRelMethods = new HashSet<>();
 
                 while (relMethodsItr.hasNext()){
                     SootMethod method = relMethodsItr.next().method();
                     activityMethodExpand.get(activityClass).add(method);
-                    activityClassExpand.get(activityClass).add(method.getDeclaringClass());
+                    SootClass declaringClass = method.getDeclaringClass();
+                    activityClassExpand.get(activityClass).add(declaringClass);
+                    if (declaringClass.hasSuperclass()) {
+                        SootClass superClass = declaringClass.getSuperclass();
+                        if (superClass.getName().equals("android.os.AsyncTask") ||
+                            superClass.getName().equals("java.lang.Thread") ||
+                            superClass.getName().equals("java.util.concurrent.ForkJoinWorkerThread") ||
+                            superClass.getName().equals("android.os.HandlerThread") ||
+                            superClass.implementsInterface("Runnable") ||
+                            superClass.getName().equals("java.util.concurrent.FutureTask") ||
+                            superClass.implementsInterface("RunnableFuture") ||
+                            superClass.implementsInterface("ScheduledFuture") ||
+                            superClass.implementsInterface("RunnableScheduledFuture") ||
+                            superClass.getName().equals("android.os.Handler") ||
+                            superClass.getName().equals("android.content.AsyncQueryHandler") ||
+                            superClass.getName().equals("android.content.AsyncQueryHandler.WorkerHandler") ||
+                            superClass.getName().equals("android.webkit.HttpAuthHandler") ||
+                            superClass.getName().equals("android.webkit.HttpAuthHandler"))
+                            deltaRelMethods.addAll(declaringClass.getMethods());
+                    }
                 }
+                activityMethodExpand.get(activityClass).addAll(deltaRelMethods);
                 Util.LOGGER.info(activityClass.toString() + " finished");
             }
             else
                 System.out.println(activityClass.toString() + " not found");
+
+            try {
+                File tempFile = new File("/tmp/activityMethodCheckout_" + activityClass.getName());
+                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(tempFile), "UTF8"));
+
+                for (SootMethod appMethod: activityMethodExpand.get(activityClass))
+                    out.write(appMethod.getDeclaringClass() + "." + appMethod.getName() + "\n");
+                out.close();
+
+                tempFile = new File("/tmp/activityClassCheckout_" + activityClass.getName());
+                out = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(tempFile), "UTF8"));
+                for (SootClass appClass: activityClassExpand.get(activityClass))
+                    out.write(appClass.getName() + "\n");
+                out.close();
+            }
+            catch (Exception e){
+                System.out.println("Output failed");
+            }
         }
     }
 
@@ -112,7 +154,7 @@ public class ActivityAnalysis {
         Config.init();
 
         List<String> activityList = getActivityListFromMappingFile("/mnt/data/activity_text_mapping.json",
-                Config.codeDir);
+            Config.codeDir);
         activityExpand(activityList);
     }
 }
