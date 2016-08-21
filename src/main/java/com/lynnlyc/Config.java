@@ -256,8 +256,11 @@ public class Config {
         Options.v().set_debug(false);
         Options.v().set_prepend_classpath(true);
         Options.v().set_allow_phantom_refs(true);
-//        Options.v().set_whole_program(true);
-//        Options.v().set_src_prec(Options.src_prec_apk);
+
+        // for call graph
+        Options.v().set_whole_program(true);
+        Options.v().set_no_bodies_for_excluded(true);
+
         Options.v().set_output_dir(Config.outputDir);
 
         List<String> process_dirs = new ArrayList<>();
