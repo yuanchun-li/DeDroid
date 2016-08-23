@@ -123,20 +123,36 @@ public class ActivityAnalysis {
             else
                 System.out.println(activityClass.toString() + " not found");
 
+            // extract text features
             try {
-                File tempFile = new File("/tmp/activityMethodCheckout_" + activityClass.getName());
+                File tempFile = new File(Config.outputDir + "/" + activityClass.getName() + "_text_feature.txt");
                 BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(tempFile), "UTF8"));
 
-                for (SootMethod appMethod: activityMethodExpand.get(activityClass))
-                    out.write(appMethod.getDeclaringClass() + "." + appMethod.getName() + "\n");
-                out.close();
+                JSONObject outInfo = new JSONObject();
 
-                tempFile = new File("/tmp/activityClassCheckout_" + activityClass.getName());
-                out = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(tempFile), "UTF8"));
-                for (SootClass appClass: activityClassExpand.get(activityClass))
-                    out.write(appClass.getName() + "\n");
+                for (SootClass appClass: activityClassExpand.get(activityClass)){
+                    // class name
+                    outInfo.put(appClass.getName(), new JSONObject());
+                    // package name
+                    JSONObject appClassInfo = (JSONObject)outInfo.get(appClass.getName());
+                    appClassInfo.put("package_name", appClass.getPackageName());
+                    // field names
+                    appClassInfo.put("fields", new JSONArray());
+                    JSONArray appClassFields = (JSONArray)appClassInfo.get("fields");
+                    for (SootField classField: appClass.getFields())
+                        appClassFields.put(classField.getDeclaration());
+                    // reserve method list
+                    appClassInfo.put("methods", new JSONArray());
+                }
+                // class names, method names and field names
+                for (SootMethod appMethod: activityMethodExpand.get(activityClass)) {
+                    JSONObject appClassInfo = (JSONObject)outInfo.get(appMethod.getDeclaringClass().getName());
+                    JSONArray methodList = (JSONArray)appClassInfo.get("methods");
+                    methodList.put(appMethod.getDeclaration());
+                }
+
+                out.write(outInfo.toString());
                 out.close();
             }
             catch (Exception e){
