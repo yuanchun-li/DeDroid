@@ -309,3 +309,5 @@ def convert_soot_sig_to_unique_id(node_sig, node_type):
         return "%s;->%s(%s)" % (cls_sig, method_name, para_types)
     else:
         return node_sig
+
+
