@@ -14,3 +14,4 @@ examples
 *.DS_STORE
 .gitignore
 *.pyc
+*sample_data
