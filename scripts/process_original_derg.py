@@ -67,7 +67,8 @@ def run(derg_path, new_derg_path):
         new_node_id += 1
         new_nodes.append(node)
 
-        node_type = node['type']
+        node_type = node['type'].lower()
+        node['type'] = node_type
         node_types.add(node_type)
 
         if node_type == 'type':
@@ -104,7 +105,7 @@ def get_type_node(derg, type_name):
     new_node = {
       "name": type_name,
       "sig": "",
-      "type": "type",
+      "type": 'type' if type_name in utils.PRIMITIVE_TYPES else "class_lib",
       "id": len(derg['nodes'])
     }
     derg['nodes'].append(new_node)

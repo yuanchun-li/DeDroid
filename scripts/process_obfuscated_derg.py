@@ -70,13 +70,14 @@ def run(mapping_file, obfuscated_derg_path, new_derg_path):
         new_node_id += 1
         new_nodes.append(node)
 
-        node_type = node['type']
+        node_type = node['type'].lower()
+        node['type'] = node_type
         node_types.add(node_type)
 
         if node_type == 'type':
             type_names.add(node['name'])
 
-        if not node_type.endswith('_LIB'):
+        if not node_type.endswith('_lib'):
             if node_type.startswith('package') \
                     or node_type.startswith('class') \
                     or node_type.startswith('method') \
@@ -120,7 +121,7 @@ def get_type_node(derg, type_name):
       "recovered_name": "",
       "name": type_name,
       "sig": "",
-      "type": "type" if type_name in utils.PRIMITIVE_TYPES else "class_LIB",
+      "type": "type" if type_name in utils.PRIMITIVE_TYPES else "class_lib",
       "id": len(derg['nodes'])
     }
     derg['nodes'].append(new_node)

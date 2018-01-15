@@ -1,6 +1,6 @@
 import difflib
+import os
 import re
-
 
 PRIMITIVE_TYPES = \
     [u'void', u'int', u'short', u'long', u'float', u'double', u'boolean', u'byte', u'char']
@@ -71,16 +71,16 @@ class IdentifierMapping(object):
             if node_name == node_recovered_name:
                 continue
 
-            if node_type.endswith("_3LIB"):
+            if node_type.endswith("_3lib"):
                 self.sigs_3lib.add(node_sig)
 
-            if node_type in ["package", "package_3LIB"]:
+            if node_type in ["package", "package_3lib"]:
                 self.package_mapping[node_sig] = node_recovered_name
-            elif node_type in ["class", "class_3LIB"]:
+            elif node_type in ["class", "class_3lib"]:
                 self.class_mapping[node_sig] = node_recovered_name
-            elif node_type in ["field", "field_3LIB"]:
+            elif node_type in ["field", "field_3lib"]:
                 self.field_mapping[node_sig] = node_recovered_name
-            elif node_type in ["method", "method_3LIB"]:
+            elif node_type in ["method", "method_3lib"]:
                 self.method_mapping[node_sig] = node_recovered_name
 
     def dump(self, out_file):
@@ -230,7 +230,7 @@ def dump_compare_dict(a, b, match_mode, third_party_sigs, report_file, flag="l")
         value_proguard = safe_get(a, key)
         value_predict = safe_get(b, key)
         line_flag = flag if is_matched(value_proguard, value_predict, match_mode) else flag.upper()
-        lib_flag = "3LIB" if key in third_party_sigs else "degd"
+        lib_flag = "3lib" if key in third_party_sigs else "degd"
         report_file.write("[%s](%s) %s %s/%s\n" % (line_flag, lib_flag, key, value_proguard, value_predict))
 
 
@@ -314,3 +314,12 @@ def convert_soot_sig_to_unique_id(node_sig, node_type):
         return node_sig
 
 
+def load_dergs(dergs_dir, derg_name):
+    from derg import DERG
+    dergs = []
+    for path, dir_names, file_names in os.walk(dergs_dir):
+        for file_name in file_names:
+            if file_name == derg_name:
+                derg_path = os.path.join(path, file_name)
+                dergs.append(DERG(derg_path))
+    return dergs
