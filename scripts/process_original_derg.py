@@ -5,21 +5,18 @@ import json
 import utils
 
 
-def run(mapping_file, obfuscated_derg_path, new_derg_path):
+def run(derg_path, new_derg_path):
     """
 
-    :param mapping_file:
-    :param obfuscated_derg_path:
+    :param derg_path:
     :param new_derg_path
     """
 
-    mapping_file = os.path.abspath(mapping_file)
-    obfuscated_derg_path = os.path.abspath(obfuscated_derg_path)
+    derg_path = os.path.abspath(derg_path)
 
-    proguard = utils.IdentifierMapping(mapping_file=mapping_file)
-    obfuscated_derg_file = open(obfuscated_derg_path, 'r')
-    derg = json.load(obfuscated_derg_file)
-    obfuscated_derg_file.close()
+    derg_file = open(derg_path, 'r')
+    derg = json.load(derg_file)
+    derg_file.close()
 
     new_derg_dir = os.path.dirname(new_derg_path)
     if not os.path.exists(new_derg_dir):
@@ -76,18 +73,6 @@ def run(mapping_file, obfuscated_derg_path, new_derg_path):
         if node_type == 'type':
             type_names.add(node['name'])
 
-        if not node_type.endswith('_LIB'):
-            if node_type.startswith('package') \
-                    or node_type.startswith('class') \
-                    or node_type.startswith('method') \
-                    or node_type.startswith('field'):
-                node_unique_id = utils.convert_soot_sig_to_unique_id(node['sig'], node_type)
-                if node_unique_id in proguard.mapping:
-                    original_name = proguard.mapping[node_unique_id]
-                else:
-                    original_name = node['name']
-                node['original_name'] = original_name
-
         if node['sig'] == "":
             node['sig'] = node['name']
         if 'recovered_sig' in node:
@@ -117,10 +102,9 @@ def get_type_node(derg, type_name):
             return node
     print("type node not found: %s" % type_name)
     new_node = {
-      "recovered_name": "",
       "name": type_name,
       "sig": "",
-      "type": "type" if type_name in utils.PRIMITIVE_TYPES else "class_LIB",
+      "type": "type",
       "id": len(derg['nodes'])
     }
     derg['nodes'].append(new_node)
@@ -140,11 +124,9 @@ def parse_args():
     generate options including input proguard-generated mappings and predict mappings
     """
     parser = argparse.ArgumentParser(
-        description="add the original name (ground truth) of each node in the obfuscated derg")
-    parser.add_argument("-mapping", action="store", dest="mapping_file",
-                        required=True, help="path to proguard-generated mapping.txt")
-    parser.add_argument("-obfuscated_derg", action="store", dest="obfuscated_derg_path",
-                        required=True, help="path to the obfuscated derg")
+        description="process the original derg")
+    parser.add_argument("-derg", action="store", dest="derg_path",
+                        required=True, help="path to the original derg")
     parser.add_argument("-new_derg", action="store", dest="new_derg_path",
                         required=True, help="path to the new derg with original names")
 
@@ -158,7 +140,7 @@ def main():
     the main function
     """
     opts = parse_args()
-    run(opts.mapping_file, opts.obfuscated_derg_path, opts.new_derg_path)
+    run(opts.derg_path, opts.new_derg_path)
 
     return
 

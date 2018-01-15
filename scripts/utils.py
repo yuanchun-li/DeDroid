@@ -2,6 +2,9 @@ import difflib
 import re
 
 
+PRIMITIVE_TYPES = \
+    [u'void', u'int', u'short', u'long', u'float', u'double', u'boolean', u'byte', u'char']
+
 MATCH_MODE_EXACT = "exact"
 MATCH_MODE_SIMILAR = "similar"
 MATCH_MODE_COMMON_SUBSTR = "common_substr"

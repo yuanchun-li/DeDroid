@@ -5,29 +5,32 @@ import json
 import argparse
 
 KNOWN_RELATION_NAMES = \
-    ['CC_implement', 'CC_inherit', 'CC_outer',
-     'FT_instance',
-     'MC_exception', 'MM_override', 'MT_parameter', 'MT_return', 'MX_refer',
-     'XS_modifier', 'XX_DU', 'XX_contains']
+    [u'C_C_implement', u'C_C_inherit', u'C_F_contains', u'C_M_contains', u'C_M_modifier', u'F_C_instance', u'F_F_DU',
+     u'F_M_DU', u'F_M_modifier', u'F_T_instance', u'F_[C_instance', u'F_[T_instance', u'M_C_parameter', u'M_C_refer',
+     u'M_C_return', u'M_F_DU', u'M_F_refer', u'M_M_modifier', u'M_M_override', u'M_M_refer', u'M_T_parameter',
+     u'M_T_return', u'M_[C_parameter', u'M_[C_return', u'M_[T_parameter', u'M_[T_return', u'P_C_contains',
+     u'P_P_contains']
 
 KNOWN_NODE_TYPES = \
-    ['package_LIB', 'method_LIB', 'field_LIB', 'class_LIB',
-     'type', 'modifier']
-
-PRIMITIVE_TYPES = \
-    ['int', 'long', 'float', 'double', 'boolean', 'byte', 'java.lang.String']
+    [u'package_LIB', u'class_LIB', u'method_LIB', u'field_LIB',
+     # u'package_3LIB', u'class_3LIB', u'method_3LIB', u'field_3LIB',
+     # u'package', u'class', u'method', u'field',
+     # u'const',
+     u'modifier', u'type']
 
 INCLUDED_NODE_TYPES = \
-    ['package', 'class', 'method', 'field',
-     'package_3LIB', 'method_3LIB', 'field_3LIB', 'class_3LIB',
-     'package_LIB', 'method_LIB', 'field_LIB', 'class_LIB',
-     'type', 'modifier']
+    [u'package_LIB', u'class_LIB', u'method_LIB', u'field_LIB',
+     u'package_3LIB', u'class_3LIB', u'method_3LIB', u'field_3LIB',
+     u'package', u'class', u'method', u'field',
+     # u'const',
+     u'modifier', u'type']
 
 INCLUDED_RELATION_NAMES = \
-    ['CC_implement', 'CC_inherit', 'CC_outer',
-     'FT_instance',
-     'MC_exception', 'MM_override', 'MT_parameter', 'MT_return', 'MX_refer',
-     'XS_modifier', 'XX_DU', 'XX_contains']
+    [u'CC_implement', u'CC_inherit', u'CF_contains', u'CM_contains', u'CM_modifier',
+     u'FC_instance', u'FF_DU', u'FM_DU', u'FM_modifier', u'FT_instance',
+     u'MC_parameter', u'MC_refer', u'MC_return', u'MF_DU', u'MF_refer', u'MM_modifier',
+     u'MM_override', u'MM_refer', u'MT_parameter', u'MT_return',
+     u'PC_contains', u'PP_contains']
 
 
 class DERG(object):
@@ -48,18 +51,10 @@ class DERG(object):
 
     @staticmethod
     def get_node_name(node):
-        name = node['name']
-        if node['type'] == 'modifier':
-            name = 'modifier:' + name
-        elif node['type'] == 'type':
-            if name.endswith('[]') and name[:name.rfind('[')] not in PRIMITIVE_TYPES:
-                name = '*[]'
-            name = 'type:' + name
-        elif node['type'].endswith('_LIB'):
-            name = 'lib:' + name.replace(' ', '~')
-        # elif node['type'].endswith('_3LIB'):
-        #     name = '3lib:' + name.replace(' ', '~')
-        return name
+        if DERG.is_known(node):
+            return '%s:%s' % (node['type'], node['sig'].replace(' ', ''))
+        else:
+            return node['name']
 
 
 def get_dergs(dergs_dir, derg_name):
