@@ -5,6 +5,33 @@ import json
 import utils
 
 
+def fix_package_sigs(derg):
+    belongto_map = get_belongto_map(derg)
+    for node in derg['nodes']:
+        if node['type'].startswith("package") and not node['type'].endswith('_lib'):
+            node['sig'] = ".".join([derg['nodes'][i]['name']
+                                    for i in get_parent_nodes(belongto_map, node['id'])[::-1][1:]])
+
+
+def get_belongto_map(derg):
+    belongto_map = {}
+    derg_edges = derg['edges']
+    for edge in derg_edges:
+        if edge['relation'].endswith("_contains"):
+            s = edge['source']
+            t = edge['target']
+            belongto_map[t] = s
+    return belongto_map
+
+
+def get_parent_nodes(belongto_map, node_id):
+    parents = [node_id]
+    while node_id in belongto_map:
+        node_id = belongto_map[node_id]
+        parents.append(node_id)
+    return parents
+
+
 def run(derg_path, new_derg_path):
     """
 
@@ -24,6 +51,8 @@ def run(derg_path, new_derg_path):
 
     edge_names = set()
     included_node_ids = set()
+
+    fix_package_sigs(derg)
 
     for edge in derg['edges']:
         edge_name = edge['relation']

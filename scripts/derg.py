@@ -1,5 +1,6 @@
 import json
 import os
+import hashlib
 import networkx as nx
 from networkx.readwrite import json_graph
 
@@ -11,12 +12,25 @@ STATIC_NODE_TYPES = \
      u'const',
      u'modifier', u'type']
 
-METHOD_HASH_NODE_TYPES = \
+THIRD_PARTY_LIB_NODE_TYPES = \
     [u'package_lib', u'class_lib', u'method_lib', u'field_lib',
      # u'package_3lib', u'class_3lib', u'method_3lib', u'field_3lib',
      # u'package', u'class', u'method', u'field',
      u'const',
+     # u'modifier',
      u'type']
+
+THIRD_PARTY_LIB_EDGE_TYPES = \
+    [u'C_F_contains', u'C_M_contains', u'P_C_contains', u'P_P_contains',
+     u'C_M_modifier', u'F_M_modifier', u'M_M_modifier',
+     u'F_C_instance', u'F_T_instance', u'F_[C_instance', u'F_[T_instance',
+     u'M_C_parameter', u'M_C_refer', u'M_C_return', u'M_F_DU', u'M_F_refer', u'M_M_override', u'M_M_refer',
+     u'M_T_parameter', u'M_T_return', u'M_[C_parameter', u'M_[C_return', u'M_[T_parameter', u'M_[T_return']
+    # [u'C_C_implement', u'C_C_inherit', u'C_F_contains', u'C_M_contains', u'C_M_modifier', u'F_C_instance', u'F_F_DU',
+    #  u'F_M_DU', u'F_M_modifier', u'F_T_instance', u'F_[C_instance', u'F_[T_instance', u'M_C_parameter', u'M_C_refer',
+    #  u'M_C_return', u'M_F_DU', u'M_F_refer', u'M_M_modifier', u'M_M_override', u'M_M_refer', u'M_T_parameter',
+    #  u'M_T_return', u'M_[C_parameter', u'M_[C_return', u'M_[T_parameter', u'M_[T_return', u'P_C_contains',
+    #  u'P_P_contains']
 
 
 class DERG(object):
@@ -71,7 +85,8 @@ class DERG(object):
 
     def get_package_subgraph(self, package):
         # TODO fix this
-        included_node_ids = set()
+        subgraph = nx.DiGraph()
+
         for node_id in self.g.nodes:
             node = self.g.nodes[node_id]
             node_type = node['type']
@@ -79,26 +94,46 @@ class DERG(object):
                 continue
             node_sig = node['sig']
             included = False
-            if node_type.startswith('class'):
+            if node_type.startswith('package') or node_type.startswith('class'):
                 included = node_sig.startswith(package)
             elif node_type.startswith('method') or node_type.startswith('field'):
                 included = node_sig.startswith('<' + package)
             if not included:
                 continue
-            included_node_ids.add(node_id)
+            if node_type.startswith('method'):
+                node = node.copy()
+                node['hash'] = self.get_method_hash(node_id)
+            subgraph.add_node(node_id, **node)
             for child_node_id in self.g[node_id]:
                 child_node = self.g.nodes[child_node_id]
-                if child_node['type'] in STATIC_NODE_TYPES:
-                    included_node_ids.add(child_node_id)
-        return self.g.subgraph(included_node_ids)
+                edge = self.g[node_id][child_node_id]
+                if child_node['type'] in THIRD_PARTY_LIB_NODE_TYPES and edge['relation'] in THIRD_PARTY_LIB_EDGE_TYPES:
+                    subgraph.add_node(child_node_id, **child_node)
+                    subgraph.add_edge(node_id, child_node_id, **edge)
+
+        return subgraph
+
+    def get_method_hash(self, method_node_id):
+        """
+        method hashes can be used to identify 3-rd party library
+        :param method_node_id:
+        :return:
+        """
+        static_child_node_names = []
+        for child_node_id in self.g[method_node_id]:
+            child_node = self.g.nodes[child_node_id]
+            if child_node['type'] in THIRD_PARTY_LIB_NODE_TYPES:
+                static_child_node_names.append(child_node['name'])
+        # method_hash = hashlib.md5("\n".join(sorted(static_child_node_names))).hexdigest()
+        method_hash = "\n".join(sorted(static_child_node_names))
+        return method_hash
 
     def get_package_method_hashes(self, package):
         """
-        method hashes can be used to identify 3-rd party library
+        get a set of method hashes of all methods in the given package
         :param package:
         :return: a set of method hashes
         """
-        import hashlib
         method_hashes = set()
         for node_id in self.g.nodes:
             node = self.g.nodes[node_id]
@@ -108,14 +143,7 @@ class DERG(object):
             node_sig = node['sig']
             if not (node_type.startswith('method') and node_sig.startswith('<' + package)):
                 continue
-            static_child_node_names = []
-            for child_node_id in self.g[node_id]:
-                child_node = self.g.nodes[child_node_id]
-                if child_node['type'] in METHOD_HASH_NODE_TYPES:
-                    static_child_node_names.append(child_node['name'])
-            # method_hash = hashlib.md5("\n".join(sorted(static_child_node_names))).hexdigest()
-            method_hash = "\n".join(sorted(static_child_node_names))
-            method_hashes.add(method_hash)
+            method_hashes.add(self.get_method_hash(node_id))
         return method_hashes
 
     @staticmethod
@@ -129,8 +157,14 @@ class DERG(object):
             return False
         if n_type in STATIC_NODE_TYPES:
             return n1['sig'] == n2['sig']
+        elif n_type.startswith('method'):
+            return n1['hash'] == n2['hash']
         else:
             return True
+
+    def get_kg_mappings(self):
+        # get name mappings in knowledge graph
+        return KnowledgeGraph.get_unknown_node_name_mappings(self)
 
 
 KNOWN_RELATION_NAMES = \
