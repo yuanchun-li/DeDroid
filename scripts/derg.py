@@ -3,6 +3,7 @@ import os
 import hashlib
 import networkx as nx
 from networkx.readwrite import json_graph
+from networkx.algorithms import isomorphism
 
 
 STATIC_NODE_TYPES = \
@@ -35,6 +36,8 @@ THIRD_PARTY_LIB_EDGE_TYPES = \
 
 class DERG(object):
     def __init__(self, derg_path=None, derg_dict=None):
+        self.derg_path = None
+        self.g = None
         if derg_path:
             self.derg_path = derg_path
             derg_dict = json.load(open(derg_path))
@@ -42,9 +45,8 @@ class DERG(object):
         elif derg_dict:
             self.derg_path = derg_dict['derg_path']
             self.g = self.load_nx_graph(derg_dict)
-        else:
-            self.derg_path = None
-            self.g = None
+
+        self.method_hashes = None
 
     @staticmethod
     def load_nx_graph(derg_dict):
@@ -140,23 +142,21 @@ class DERG(object):
         # method_hash = "\n".join(sorted(static_child_node_names))
         return method_hash
 
-    def get_package_method_hashes(self, package):
+    def get_method_hashes(self):
         """
-        get a set of method hashes of all methods in the given package
-        :param package:
+        get a set of method hashes of all methods in the derg
         :return: a set of method hashes
         """
-        method_hashes = set()
-        for node_id in self.g.nodes:
-            node = self.g.nodes[node_id]
-            node_type = node['type']
-            if node_type in STATIC_NODE_TYPES:
-                continue
-            node_sig = node['sig']
-            if not (node_type.startswith('method') and node_sig.startswith('<' + package)):
-                continue
-            method_hashes.add(self.get_method_hash(node_id))
-        return method_hashes
+        if not self.method_hashes:
+            self.method_hashes = set()
+            for node_id in self.g.nodes:
+                node = self.g.nodes[node_id]
+                node_type = node['type']
+                if node_type in STATIC_NODE_TYPES:
+                    continue
+                if node_type.startswith('method'):
+                    self.method_hashes.add(self.get_method_hash(node_id))
+        return self.method_hashes
 
     def get_kg_mappings(self):
         # get name mappings in knowledge graph
@@ -351,10 +351,17 @@ class ThridPartyLibRepo(object):
     def _update_lib_packages(self, new_derg, package):
         print("Processing %s" % new_derg.derg_path)
         for lib_package in self.lib_packages:
-            lib_derg = lib_package['derg']
-            if self.is_same_derg(lib_derg, new_derg):
+            lib_package_derg = lib_package['derg']
+            lib_package_hashes = lib_package_derg.get_method_hashes()
+            new_package_hashes = new_derg.get_method_hashes()
+            if lib_package_hashes.issuperset(new_package_hashes):
                 lib_package['paths'].append(new_derg.derg_path)
                 lib_package['packages'].append(package)
+                return
+            elif lib_package_hashes.issubset(new_package_hashes):
+                lib_package['paths'].append(new_derg.derg_path)
+                lib_package['packages'].append(package)
+                lib_package['derg'] = new_derg
                 return
         self.lib_packages.append({
             'paths': [new_derg.derg_path],
@@ -375,9 +382,9 @@ class ThridPartyLibRepo(object):
 
     @staticmethod
     def is_same_derg(derg1, derg2):
-        GM = isomorphism.MultiDiGraphMatcher(derg1.g, derg2.g,
-                                             node_match=ThridPartyLibRepo.node_match,
-                                             edge_match=ThridPartyLibRepo.edge_match)
+        GM = isomorphism.DiGraphMatcher(derg1.g, derg2.g,
+                                        node_match=ThridPartyLibRepo.node_match,
+                                        edge_match=ThridPartyLibRepo.edge_match)
         return GM.is_isomorphic()
 
     @staticmethod
@@ -395,3 +402,15 @@ class ThridPartyLibRepo(object):
             return n1['hash'] == n2['hash']
         else:
             return True
+
+    def match_3lib_package(self, package_derg):
+        for lib_package in self.lib_packages:
+            lib_derg = lib_package['derg']
+            if not lib_derg.get_method_hashes().issuperset(package_derg.get_method_hashes()):
+                continue
+            GM = isomorphism.DiGraphMatcher(lib_derg.g, package_derg.g,
+                                            node_match=ThridPartyLibRepo.node_match,
+                                            edge_match=ThridPartyLibRepo.edge_match)
+            if GM.subgraph_is_isomorphic():
+                return lib_package, GM.mapping
+        return None, None

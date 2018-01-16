@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse
-import json
-from networkx.algorithms import isomorphism
 
 import utils
-from scripts.derg import ThridPartyLibRepo
+from derg import ThridPartyLibRepo
 
 
 def run(dergs_dir, output_path, derg_name):
     dergs = utils.load_dergs(dergs_dir, derg_name)
+    print("Finish loading dergs.")
     repo = ThridPartyLibRepo()
     repo.collect_from_dergs(dergs)
     repo.export(output_path)
