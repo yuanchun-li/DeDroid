@@ -34,17 +34,24 @@ THIRD_PARTY_LIB_EDGE_TYPES = \
 
 
 class DERG(object):
-    def __init__(self, derg_path):
-        self.derg_path = derg_path
-        self.g = self.load_nx_graph(derg_path)
+    def __init__(self, derg_path=None, derg_dict=None):
+        if derg_path:
+            self.derg_path = derg_path
+            derg_dict = json.load(open(derg_path))
+            self.g = self.load_nx_graph(derg_dict)
+        elif derg_dict:
+            self.derg_path = derg_dict['derg_path']
+            self.g = self.load_nx_graph(derg_dict)
+        else:
+            self.derg_path = None
+            self.g = None
 
     @staticmethod
-    def load_nx_graph(derg_path):
-        g_data = json.load(open(derg_path))
+    def load_nx_graph(derg_dict):
         g = nx.DiGraph()
-        for node in g_data['nodes']:
+        for node in derg_dict['nodes']:
             g.add_node(node['id'], **node)
-        for edge in g_data['edges']:
+        for edge in derg_dict['edges']:
             g.add_edge(edge['source'], edge['target'], **edge)
         return g
 
@@ -59,10 +66,13 @@ class DERG(object):
     def get_node_global_id(self, node):
         return '%s->node:%d' % (self.derg_path, node['id'])
 
+    def to_dict(self):
+        g_dict = json_graph.node_link_data(self.g)
+        g_dict['edges'] = g_dict.pop('links')
+        g_dict['derg_path'] = self.derg_path
+
     def export(self, output_path):
-        g_data = json_graph.node_link_data(self.g)
-        g_data['edges'] = g_data.pop('links')
-        json.dump(g_data, open(output_path, 'w'))
+        json.dump(self.to_dict(), open(output_path, 'w'))
 
     def get_packages(self):
         packages = set()
@@ -83,8 +93,7 @@ class DERG(object):
 
         return packages - sub_packages
 
-    def get_package_subgraph(self, package):
-        # TODO fix this
+    def get_package_derg(self, package):
         subgraph = nx.DiGraph()
 
         for node_id in self.g.nodes:
@@ -111,7 +120,10 @@ class DERG(object):
                     subgraph.add_node(child_node_id, **child_node)
                     subgraph.add_edge(node_id, child_node_id, **edge)
 
-        return subgraph
+        package_derg = DERG()
+        package_derg.derg_path = "%s->package:%s" % (self.derg_path, package)
+        package_derg.g = subgraph.copy()
+        return package_derg
 
     def get_method_hash(self, method_node_id):
         """
@@ -124,8 +136,8 @@ class DERG(object):
             child_node = self.g.nodes[child_node_id]
             if child_node['type'] in THIRD_PARTY_LIB_NODE_TYPES:
                 static_child_node_names.append(child_node['name'])
-        # method_hash = hashlib.md5("\n".join(sorted(static_child_node_names))).hexdigest()
-        method_hash = "\n".join(sorted(static_child_node_names))
+        method_hash = hashlib.md5("\n".join(sorted(static_child_node_names))).hexdigest()
+        # method_hash = "\n".join(sorted(static_child_node_names))
         return method_hash
 
     def get_package_method_hashes(self, package):
@@ -145,22 +157,6 @@ class DERG(object):
                 continue
             method_hashes.add(self.get_method_hash(node_id))
         return method_hashes
-
-    @staticmethod
-    def edge_match(e1, e2):
-        return e1['relation'] == e2['relation']
-
-    @staticmethod
-    def node_match(n1, n2):
-        n_type = n1['type']
-        if not n2['type'].startswith(n_type):
-            return False
-        if n_type in STATIC_NODE_TYPES:
-            return n1['sig'] == n2['sig']
-        elif n_type.startswith('method'):
-            return n1['hash'] == n2['hash']
-        else:
-            return True
 
     def get_kg_mappings(self):
         # get name mappings in knowledge graph
@@ -327,3 +323,75 @@ class KnowledgeGraph(object):
             relation2id_lines.append(line.encode('utf-8'))
         relation2id_file.writelines(relation2id_lines)
         relation2id_file.close()
+
+
+class ThridPartyLibRepo(object):
+    def __init__(self):
+        self.lib_packages = []
+
+    def load(self, repo_path):
+        self.lib_packages = json.load(open(repo_path))
+        for lib_package in self.lib_packages:
+            lib_package['derg'] = DERG(derg_dict=lib_package['derg'])
+
+    def export(self, output_path):
+        for lib_package in self.lib_packages:
+            lib_package['derg'] = lib_package['derg'].to_dict()
+        json.dump(self.lib_packages, open(output_path, 'w'), indent=2)
+
+    def collect_from_dergs(self, dergs):
+        for derg in dergs:
+            packages = derg.get_packages()
+            for package in packages:
+                sub_derg = derg.get_package_derg(package)
+                self._update_lib_packages(sub_derg, package)
+        print("Found %d unique packages in total." % len(self.lib_packages))
+        self._clear_uncommon_lib_packages()
+
+    def _update_lib_packages(self, new_derg, package):
+        print("Processing %s" % new_derg.derg_path)
+        for lib_package in self.lib_packages:
+            lib_derg = lib_package['derg']
+            if self.is_same_derg(lib_derg, new_derg):
+                lib_package['paths'].append(new_derg.derg_path)
+                lib_package['packages'].append(package)
+                return
+        self.lib_packages.append({
+            'paths': [new_derg.derg_path],
+            'packages': [package],
+            'derg': new_derg
+        })
+
+    def _clear_uncommon_lib_packages(self, threshold=1):
+        uncommon_lib_packages = []
+        for lib_package in self.lib_packages:
+            paths = lib_package['paths']
+            if len(paths) <= threshold:
+                uncommon_lib_packages.append(lib_package)
+        for uncommon_lib_package in uncommon_lib_packages:
+            self.lib_packages.remove(uncommon_lib_package)
+        print("Found %d lib packages after clearing uncommon ones (threshold %d)."
+              % (len(self.lib_packages), threshold))
+
+    @staticmethod
+    def is_same_derg(derg1, derg2):
+        GM = isomorphism.MultiDiGraphMatcher(derg1.g, derg2.g,
+                                             node_match=ThridPartyLibRepo.node_match,
+                                             edge_match=ThridPartyLibRepo.edge_match)
+        return GM.is_isomorphic()
+
+    @staticmethod
+    def edge_match(e1, e2):
+        return e1['relation'] == e2['relation']
+
+    @staticmethod
+    def node_match(n1, n2):
+        n_type = n1['type']
+        if not n2['type'].startswith(n_type):
+            return False
+        if n_type in STATIC_NODE_TYPES:
+            return n1['sig'] == n2['sig']
+        elif n_type.startswith('method'):
+            return n1['hash'] == n2['hash']
+        else:
+            return True

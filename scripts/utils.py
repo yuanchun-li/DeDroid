@@ -295,6 +295,10 @@ def safe_divide(a, b):
     return float(a) / b
 
 
+def most_common(lst):
+    return max(set(lst), key=lst.count)
+
+
 def convert_soot_sig_to_unique_id(node_sig, node_type):
     if node_type.startswith('field'):
         m = re.match(RE_SOOT_FIELD, node_sig)
