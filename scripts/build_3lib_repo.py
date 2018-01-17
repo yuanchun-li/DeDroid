@@ -3,14 +3,14 @@
 import argparse
 
 import utils
-from derg import ThridPartyLibRepo
+from derg import ThirdPartyLibRepo
 
 
-def run(dergs_dir, output_path, derg_name):
+def run(dergs_dir, output_path, derg_name, min_freq):
     dergs = utils.load_dergs(dergs_dir, derg_name)
     print("Finish loading dergs.")
-    repo = ThridPartyLibRepo()
-    repo.collect_from_dergs(dergs)
+    repo = ThirdPartyLibRepo()
+    repo.collect_from_dergs(dergs, min_freq)
     repo.export(output_path)
 
 
@@ -27,6 +27,8 @@ def parse_args():
                         required=True, help="path to a file where the third party library repository will be stored")
     parser.add_argument("-derg_name", action="store", dest="derg_name", default="derg.json",
                         required=False, help="the name of input derg")
+    parser.add_argument("-min_freq", action="store", dest="min_freq", default=2,
+                        required=False, help="minimum frequency of package to be considered as a third party library")
 
     options = parser.parse_args()
     print options
@@ -38,7 +40,7 @@ def main():
     the main function
     """
     opts = parse_args()
-    run(opts.dergs_dir, opts.output_path, opts.derg_name)
+    run(opts.dergs_dir, opts.output_path, opts.derg_name, int(opts.min_freq))
 
     return
 

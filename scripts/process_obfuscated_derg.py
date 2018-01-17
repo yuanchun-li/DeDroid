@@ -5,18 +5,23 @@ import json
 import utils
 
 
-def run(mapping_file, obfuscated_derg_path, new_derg_path):
+def run(mapping_file, obfuscated_derg_path, new_derg_path, deguard_mapping_file=None):
     """
 
     :param mapping_file:
     :param obfuscated_derg_path:
     :param new_derg_path
+    :param deguard_mapping_file
     """
 
     mapping_file = os.path.abspath(mapping_file)
     obfuscated_derg_path = os.path.abspath(obfuscated_derg_path)
 
     proguard = utils.IdentifierMapping(mapping_file=mapping_file)
+    deguard = None
+    if deguard_mapping_file:
+        deguard = utils.IdentifierMapping(de_mapping_file=deguard_mapping_file)
+
     obfuscated_derg_file = open(obfuscated_derg_path, 'r')
     derg = json.load(obfuscated_derg_file)
     obfuscated_derg_file.close()
@@ -71,6 +76,7 @@ def run(mapping_file, obfuscated_derg_path, new_derg_path):
         new_nodes.append(node)
 
         node_type = node['type'].lower()
+        node_type = node_type.replace('_3lib', '')
         node['type'] = node_type
         node_types.add(node_type)
 
@@ -89,10 +95,15 @@ def run(mapping_file, obfuscated_derg_path, new_derg_path):
                     original_name = node['name']
                 node['original_name'] = original_name
 
+                if deguard and node_unique_id in deguard.mapping:
+                    node['deguard_name'] = deguard.mapping[node_unique_id]
+
         if node['sig'] == "":
             node['sig'] = node['name']
         if 'recovered_sig' in node:
             node.pop('recovered_sig')
+        if 'recovered_name' in node:
+            node.pop('recovered_name')
 
     print(sorted(node_types))
     print(sorted(type_names))
@@ -118,7 +129,6 @@ def get_type_node(derg, type_name):
             return node
     print("type node not found: %s" % type_name)
     new_node = {
-      "recovered_name": "",
       "name": type_name,
       "sig": "",
       "type": "type" if type_name in utils.PRIMITIVE_TYPES else "class_lib",
@@ -138,7 +148,6 @@ def get_list_element_type(node):
 def parse_args():
     """
     parse command line input
-    generate options including input proguard-generated mappings and predict mappings
     """
     parser = argparse.ArgumentParser(
         description="add the original name (ground truth) of each node in the obfuscated derg")
@@ -148,6 +157,8 @@ def parse_args():
                         required=True, help="path to the obfuscated derg")
     parser.add_argument("-new_derg", action="store", dest="new_derg_path",
                         required=True, help="path to the new derg with original names")
+    parser.add_argument("-deguard_mapping", action="store", dest="deguard_mapping_file",
+                        required=False, help="path to deguard-predicted mapping.txt")
 
     options = parser.parse_args()
     print options
@@ -159,7 +170,7 @@ def main():
     the main function
     """
     opts = parse_args()
-    run(opts.mapping_file, opts.obfuscated_derg_path, opts.new_derg_path)
+    run(opts.mapping_file, opts.obfuscated_derg_path, opts.new_derg_path, opts.deguard_mapping_file)
 
     return
 

@@ -5,25 +5,20 @@ import networkx as nx
 from networkx.readwrite import json_graph
 from networkx.algorithms import isomorphism
 
+import utils
+
 
 STATIC_NODE_TYPES = \
     [u'package_lib', u'class_lib', u'method_lib', u'field_lib',
      # u'package_3lib', u'class_3lib', u'method_3lib', u'field_3lib',
      # u'package', u'class', u'method', u'field',
-     u'const',
-     u'modifier', u'type']
-
-THIRD_PARTY_LIB_NODE_TYPES = \
-    [u'package_lib', u'class_lib', u'method_lib', u'field_lib',
-     # u'package_3lib', u'class_3lib', u'method_3lib', u'field_3lib',
-     # u'package', u'class', u'method', u'field',
-     u'const',
-     # u'modifier',
-     u'type']
+     u'const', u'modifier', u'type']
 
 THIRD_PARTY_LIB_EDGE_TYPES = \
     [u'C_F_contains', u'C_M_contains', u'P_C_contains', u'P_P_contains',
      u'C_M_modifier', u'F_M_modifier', u'M_M_modifier',
+     u'F_F_DU', u'M_F_DU',
+     # u'F_M_DU',
      u'F_C_instance', u'F_T_instance', u'F_[C_instance', u'F_[T_instance',
      u'M_C_parameter', u'M_C_refer', u'M_C_return', u'M_F_DU', u'M_F_refer', u'M_M_override', u'M_M_refer',
      u'M_T_parameter', u'M_T_return', u'M_[C_parameter', u'M_[C_return', u'M_[T_parameter', u'M_[T_return']
@@ -46,8 +41,6 @@ class DERG(object):
             self.derg_path = derg_dict['derg_path']
             self.g = self.load_nx_graph(derg_dict)
 
-        self.method_hashes = None
-
     @staticmethod
     def load_nx_graph(derg_dict):
         g = nx.DiGraph()
@@ -68,13 +61,14 @@ class DERG(object):
     def get_node_global_id(self, node):
         return '%s->node:%d' % (self.derg_path, node['id'])
 
-    def to_dict(self):
+    def derg_dict(self):
         g_dict = json_graph.node_link_data(self.g)
         g_dict['edges'] = g_dict.pop('links')
         g_dict['derg_path'] = self.derg_path
+        return g_dict
 
     def export(self, output_path):
-        json.dump(self.to_dict(), open(output_path, 'w'))
+        json.dump(self.derg_dict(), open(output_path, 'w'), indent=2)
 
     def get_packages(self):
         packages = set()
@@ -86,16 +80,29 @@ class DERG(object):
                 packages.add(package)
 
         sub_packages = set()
-        for package in packages:
-            for another_package in packages:
-                if len(package) >= len(another_package):
-                    continue
-                if another_package.startswith(package):
-                    sub_packages.add(another_package)
+        # # remove sub packages
+        # for package in packages:
+        #     for another_package in packages:
+        #         if len(package) >= len(another_package):
+        #             continue
+        #         if another_package.startswith(package):
+        #             sub_packages.add(another_package)
 
         return packages - sub_packages
 
-    def get_package_derg(self, package):
+    @staticmethod
+    def get_belonging_package(node):
+        node_type = node['type']
+        node_sig = node['sig']
+        if node_type.startswith('package'):
+            return node_sig
+        elif node_type.startswith('class'):
+            return node_sig[:node_sig.rfind('.')]
+        elif node_type.startswith('method') or node_type.startswith('field'):
+            class_sig = node_sig[1:node_sig.find(': ')]
+            return class_sig[:class_sig.rfind('.')]
+
+    def get_package_derg(self, package, recursive=False):
         subgraph = nx.DiGraph()
 
         for node_id in self.g.nodes:
@@ -103,93 +110,99 @@ class DERG(object):
             node_type = node['type']
             if node_type in STATIC_NODE_TYPES:
                 continue
-            node_sig = node['sig']
-            included = False
-            if node_type.startswith('package') or node_type.startswith('class'):
-                included = node_sig.startswith(package)
-            elif node_type.startswith('method') or node_type.startswith('field'):
-                included = node_sig.startswith('<' + package)
+            belonging_package = self.get_belonging_package(node)
+            if recursive:
+                included = belonging_package.startswith(package)
+            else:
+                included = belonging_package == package
             if not included:
                 continue
-            if node_type.startswith('method'):
-                node = node.copy()
-                node['hash'] = self.get_method_hash(node_id)
             subgraph.add_node(node_id, **node)
             for child_node_id in self.g[node_id]:
                 child_node = self.g.nodes[child_node_id]
                 edge = self.g[node_id][child_node_id]
-                if child_node['type'] in THIRD_PARTY_LIB_NODE_TYPES and edge['relation'] in THIRD_PARTY_LIB_EDGE_TYPES:
+                if not ThirdPartyLibRepo.can_be_minified(child_node) and edge['relation'] in THIRD_PARTY_LIB_EDGE_TYPES:
                     subgraph.add_node(child_node_id, **child_node)
                     subgraph.add_edge(node_id, child_node_id, **edge)
 
         package_derg = DERG()
         package_derg.derg_path = "%s->package:%s" % (self.derg_path, package)
-        package_derg.g = subgraph.copy()
+        package_derg.g = subgraph
+        package_derg.get_node_hashes(refresh=True)
         return package_derg
 
-    def get_method_hash(self, method_node_id):
+    def get_node_hash(self, node, refresh=False):
         """
-        method hashes can be used to identify 3-rd party library
-        :param method_node_id:
+        node hashes can be used to identify 3rd party library
+        :param node:
         :return:
         """
-        static_child_node_names = []
-        for child_node_id in self.g[method_node_id]:
-            child_node = self.g.nodes[child_node_id]
-            if child_node['type'] in THIRD_PARTY_LIB_NODE_TYPES:
-                static_child_node_names.append(child_node['name'])
-        method_hash = hashlib.md5("\n".join(sorted(static_child_node_names))).hexdigest()
-        # method_hash = "\n".join(sorted(static_child_node_names))
-        return method_hash
+        if not refresh and 'hash' in node:
+            return node['hash']
 
-    def get_method_hashes(self):
+        def is_hashable(node_type):
+            if node_type.endswith('_lib'):
+                return False
+            return node_type.startswith('class') or node_type.startswith('method') or node_type.startswith('field')
+
+        if not is_hashable(node['type']):
+            return None
+
+        static_child_node_names = []
+        node_id = node['id']
+        for child_node_id in self.g[node_id]:
+            child_node = self.g.nodes[child_node_id]
+            if not ThirdPartyLibRepo.can_be_minified(child_node):
+                static_child_node_names.append(child_node['name'])
+        node_hash = hashlib.md5("\n".join(sorted(static_child_node_names))).hexdigest()
+        node['hash'] = node_hash
+        # node_hash = "\n".join(sorted(static_child_node_names))
+        return node_hash
+
+    def get_node_hashes(self, refresh=False):
         """
-        get a set of method hashes of all methods in the derg
-        :return: a set of method hashes
+        get a set of node hashes of all nodes in the derg
+        :return: a set of hashes
         """
-        if not self.method_hashes:
-            self.method_hashes = set()
-            for node_id in self.g.nodes:
-                node = self.g.nodes[node_id]
-                node_type = node['type']
-                if node_type in STATIC_NODE_TYPES:
-                    continue
-                if node_type.startswith('method'):
-                    self.method_hashes.add(self.get_method_hash(node_id))
-        return self.method_hashes
+        node_hashes = set()
+        for node_id in self.g.nodes:
+            node = self.g.nodes[node_id]
+            node_hashes.add(self.get_node_hash(node, refresh))
+        return node_hashes
 
     def get_kg_mappings(self):
         # get name mappings in knowledge graph
         return KnowledgeGraph.get_unknown_node_name_mappings(self)
 
 
-KNOWN_RELATION_NAMES = \
+KG_KNOWN_RELATION_NAMES = \
     [u'C_C_implement', u'C_C_inherit', u'C_F_contains', u'C_M_contains', u'C_M_modifier', u'F_C_instance', u'F_F_DU',
      u'F_M_DU', u'F_M_modifier', u'F_T_instance', u'F_[C_instance', u'F_[T_instance', u'M_C_parameter', u'M_C_refer',
      u'M_C_return', u'M_F_DU', u'M_F_refer', u'M_M_modifier', u'M_M_override', u'M_M_refer', u'M_T_parameter',
      u'M_T_return', u'M_[C_parameter', u'M_[C_return', u'M_[T_parameter', u'M_[T_return', u'P_C_contains',
      u'P_P_contains']
 
-KNOWN_NODE_TYPES = \
+KG_KNOWN_NODE_TYPES = \
     [u'package_lib', u'class_lib', u'method_lib', u'field_lib',
      # u'package_3lib', u'class_3lib', u'method_3lib', u'field_3lib',
      # u'package', u'class', u'method', u'field',
      # u'const',
      u'modifier', u'type']
 
-INCLUDED_NODE_TYPES = \
+KG_INCLUDED_NODE_TYPES = \
     [u'package_lib', u'class_lib', u'method_lib', u'field_lib',
      u'package_3lib', u'class_3lib', u'method_3lib', u'field_3lib',
      u'package', u'class', u'method', u'field',
      # u'const',
      u'modifier', u'type']
 
-INCLUDED_RELATION_NAMES = KNOWN_RELATION_NAMES
+KG_INCLUDED_RELATION_NAMES = KG_KNOWN_RELATION_NAMES
 
 
 class KnowledgeGraph(object):
-    def __init__(self, dergs):
+    def __init__(self, dergs, include_3lib=True):
         self.dergs = dergs
+        self.include_3lib = include_3lib
         self._kg_id_offset = 0
         self.known_entity_name_to_kg_id = {}
         self.known_relation_name_to_kg_id = {}
@@ -212,7 +225,15 @@ class KnowledgeGraph(object):
 
     @staticmethod
     def is_known(node):
-        return node['type'] in KNOWN_NODE_TYPES or (node['name'] == 'DERG_ROOT' and node['type'] == 'package')
+        return node['type'] in KG_KNOWN_NODE_TYPES or (node['name'] == 'DERG_ROOT' and node['type'] == 'package')
+
+    @staticmethod
+    def is_included(node, include_3lib=True):
+        if node['type'] not in KG_INCLUDED_NODE_TYPES:
+            return False
+        if (not include_3lib) and node['type'].endswith('_3lib'):
+            return False
+        return True
 
     @staticmethod
     def get_node_name(node):
@@ -222,13 +243,12 @@ class KnowledgeGraph(object):
             return node['name']
 
     @staticmethod
-    def get_unknown_node_name_mappings(derg):
+    def get_unknown_node_name_mappings(derg, include_3lib=True):
         name_mappings = []
         for node in derg.nodes():
             if KnowledgeGraph.is_known(node):
                 continue
-            if node['type'] not in INCLUDED_NODE_TYPES:
-                continue
+            KnowledgeGraph.is_included(node, include_3lib)
             original_name = node['original_name']
             global_id = derg.get_node_global_id(node)
             name_mappings.append((global_id, original_name))
@@ -247,7 +267,7 @@ class KnowledgeGraph(object):
         self._kg_entity_name_to_id.extend(self.known_entity_name_to_kg_id.items())
 
         i = 0
-        for relation_name in sorted(KNOWN_RELATION_NAMES):
+        for relation_name in sorted(KG_KNOWN_RELATION_NAMES):
             self.known_relation_name_to_kg_id[relation_name] = i
             i += 1
         self._kg_relation_name_to_id.extend(self.known_relation_name_to_kg_id.items())
@@ -263,7 +283,7 @@ class KnowledgeGraph(object):
 
         kg_id_i = self._kg_id_offset
         for node in derg.nodes():
-            if node['type'] not in INCLUDED_NODE_TYPES:
+            if not KnowledgeGraph.is_included(node, self.include_3lib):
                 continue
             node_name = KnowledgeGraph.get_node_name(node)
             node_id = node['id']
@@ -281,7 +301,7 @@ class KnowledgeGraph(object):
             s_id = edge['source']
             t_id = edge['target']
             relation_name = edge['relation']
-            if relation_name not in INCLUDED_RELATION_NAMES \
+            if relation_name not in KG_INCLUDED_RELATION_NAMES \
                     or s_id not in node_id_to_kg_id \
                     or t_id not in node_id_to_kg_id:
                 continue
@@ -325,9 +345,10 @@ class KnowledgeGraph(object):
         relation2id_file.close()
 
 
-class ThridPartyLibRepo(object):
+class ThirdPartyLibRepo(object):
     def __init__(self):
         self.lib_packages = []
+        self._included_package_names = None
 
     def load(self, repo_path):
         self.lib_packages = json.load(open(repo_path))
@@ -336,32 +357,37 @@ class ThridPartyLibRepo(object):
 
     def export(self, output_path):
         for lib_package in self.lib_packages:
-            lib_package['derg'] = lib_package['derg'].to_dict()
+            lib_package['derg'] = lib_package['derg'].derg_dict()
         json.dump(self.lib_packages, open(output_path, 'w'), indent=2)
 
-    def collect_from_dergs(self, dergs):
+    def get_included_package_names(self):
+        if not self._included_package_names:
+            self._included_package_names = set()
+            for lib_package in self.lib_packages:
+                self._included_package_names.update(lib_package['packages'])
+        return self._included_package_names
+
+    def collect_from_dergs(self, dergs, min_freq):
         for derg in dergs:
             packages = derg.get_packages()
             for package in packages:
                 sub_derg = derg.get_package_derg(package)
                 self._update_lib_packages(sub_derg, package)
         print("Found %d unique packages in total." % len(self.lib_packages))
-        self._clear_uncommon_lib_packages()
+        self._clear_uncommon_lib_packages(min_freq)
+        self._clear_misc_lib_packages()
+        print("Found %d lib packages after clearing uncommon or miscellaneous ones." % len(self.lib_packages))
+        print("\n".join(self.get_included_package_names()))
 
     def _update_lib_packages(self, new_derg, package):
         print("Processing %s" % new_derg.derg_path)
         for lib_package in self.lib_packages:
             lib_package_derg = lib_package['derg']
-            lib_package_hashes = lib_package_derg.get_method_hashes()
-            new_package_hashes = new_derg.get_method_hashes()
-            if lib_package_hashes.issuperset(new_package_hashes):
+            lib_package_hashes = lib_package_derg.get_node_hashes()
+            new_package_hashes = new_derg.get_node_hashes()
+            if lib_package_hashes == new_package_hashes:
                 lib_package['paths'].append(new_derg.derg_path)
                 lib_package['packages'].append(package)
-                return
-            elif lib_package_hashes.issubset(new_package_hashes):
-                lib_package['paths'].append(new_derg.derg_path)
-                lib_package['packages'].append(package)
-                lib_package['derg'] = new_derg
                 return
         self.lib_packages.append({
             'paths': [new_derg.derg_path],
@@ -369,22 +395,29 @@ class ThridPartyLibRepo(object):
             'derg': new_derg
         })
 
-    def _clear_uncommon_lib_packages(self, threshold=1):
+    def _clear_uncommon_lib_packages(self, min_freq=2):
         uncommon_lib_packages = []
         for lib_package in self.lib_packages:
             paths = lib_package['paths']
-            if len(paths) <= threshold:
+            if len(paths) < min_freq:
                 uncommon_lib_packages.append(lib_package)
         for uncommon_lib_package in uncommon_lib_packages:
             self.lib_packages.remove(uncommon_lib_package)
-        print("Found %d lib packages after clearing uncommon ones (threshold %d)."
-              % (len(self.lib_packages), threshold))
+
+    def _clear_misc_lib_packages(self, threshold=3):
+        misc_lib_packages = []
+        for lib_package in self.lib_packages:
+            packages = set(lib_package['packages'])
+            if len(packages) >= threshold:
+                misc_lib_packages.append(lib_package)
+        for misc_lib_package in misc_lib_packages:
+            self.lib_packages.remove(misc_lib_package)
 
     @staticmethod
     def is_same_derg(derg1, derg2):
         GM = isomorphism.DiGraphMatcher(derg1.g, derg2.g,
-                                        node_match=ThridPartyLibRepo.node_match,
-                                        edge_match=ThridPartyLibRepo.edge_match)
+                                        node_match=ThirdPartyLibRepo.node_match,
+                                        edge_match=ThirdPartyLibRepo.edge_match)
         return GM.is_isomorphic()
 
     @staticmethod
@@ -398,19 +431,106 @@ class ThridPartyLibRepo(object):
             return False
         if n_type in STATIC_NODE_TYPES:
             return n1['sig'] == n2['sig']
-        elif n_type.startswith('method'):
-            return n1['hash'] == n2['hash']
-        else:
-            return True
+        if 'hash' in n1 and 'hash' in n2 and n1['hash'] != n2['hash']:
+            return False
+        # # Heuristic
+        # if len(n1['name']) > 3 and len(n2['name']) > 3 and n1['name'] != n2['name']:
+        #     return False
+        return True
 
-    def match_3lib_package(self, package_derg):
+    @staticmethod
+    def can_be_minified(node):
+        node_type = node['type']
+        if node_type not in STATIC_NODE_TYPES:
+            return True
+        node_name = node['name']
+        if node_type == 'modifier' and node_name == 'volatile':
+            return True
+        return False
+
+    def match_3lib_package(self, package_derg, isomorphism_timeout=10):
         for lib_package in self.lib_packages:
             lib_derg = lib_package['derg']
-            if not lib_derg.get_method_hashes().issuperset(package_derg.get_method_hashes()):
+            lib_package_name = utils.most_common(lib_package['packages'])
+            if not lib_derg.get_node_hashes().issuperset(package_derg.get_node_hashes()):
                 continue
             GM = isomorphism.DiGraphMatcher(lib_derg.g, package_derg.g,
-                                            node_match=ThridPartyLibRepo.node_match,
-                                            edge_match=ThridPartyLibRepo.edge_match)
-            if GM.subgraph_is_isomorphic():
-                return lib_package, GM.mapping
+                                            node_match=ThirdPartyLibRepo.node_match,
+                                            edge_match=ThirdPartyLibRepo.edge_match)
+            try:
+                with utils.timeout(isomorphism_timeout):
+                    if GM.subgraph_is_isomorphic():
+                        return lib_package, GM.mapping
+            except:
+                print("graph isomorphism timeout during matching %s" % lib_package_name)
         return None, None
+
+    def fast_match_3lib_package(self, package_derg):
+        for lib_package in self.lib_packages:
+            lib_derg = lib_package['derg']
+            lib_package_name = utils.most_common(lib_package['packages'])
+
+            lib_hashes = lib_derg.get_node_hashes()
+            package_hashes = package_derg.get_node_hashes()
+            common_hashes = lib_hashes.intersection(package_hashes)
+
+            common_count = len(common_hashes)
+            if common_count < 3:
+                continue
+
+            precision = float(common_count) / len(package_hashes)
+            recall = float(common_count) / len(package_hashes)
+            if precision > 0.9:
+                return lib_package_name
+        return None
+
+    def recover_derg(self, app_derg):
+        """
+        recover third party library nodes given an obfuscated derg
+        :param app_derg:
+        :return:
+        """
+        assert(isinstance(app_derg, DERG))
+        for package in app_derg.get_packages():
+            package_derg = app_derg.get_package_derg(package)
+            matched_package, mapping = self.match_3lib_package(package_derg)
+            if matched_package and mapping:
+                matched_package_name = utils.most_common(matched_package['packages'])
+                print("matched third party package: %s" % matched_package_name)
+                matched_derg = matched_package['derg']
+                for matched_id, node_id in mapping.items():
+                    node = app_derg.g.nodes[node_id]
+                    node_type = node['type']
+                    if node_type in STATIC_NODE_TYPES:
+                        continue
+                    node_type = node_type.split('_')[0]
+                    if node_type in ['package', 'class', 'method', 'field']:
+                        matched_node = matched_derg.g.nodes[matched_id]
+                        node['type'] = node_type + '_3lib'
+                        node['recovered_name'] = matched_node['name']
+                        node['recovered_sig'] = matched_node['sig']
+                print("recovered third party package: %s" % matched_package_name)
+        return app_derg
+
+    def identify_3lib_packages(self, app_derg):
+        """
+        identify third party library packages given an obfuscated derg.
+        all third party library nodes in app_derg will be added a '_3lib' suffix after calling this method.
+        :param app_derg:
+        :return:
+        """
+        assert(isinstance(app_derg, DERG))
+        for package in app_derg.get_packages():
+            package_derg = app_derg.get_package_derg(package)
+            matched_package_name = self.fast_match_3lib_package(package_derg)
+            if matched_package_name:
+                print("identified third party package: %s -> %s" % (package, matched_package_name))
+                for node_id in package_derg.g.nodes:
+                    node = app_derg.g.nodes[node_id]
+                    node_type = node['type']
+                    if node_type in STATIC_NODE_TYPES:
+                        continue
+                    node_type = node_type.split('_')[0]
+                    if node_type in ['package', 'class', 'method', 'field']:
+                        node['type'] = node_type + '_3lib'
+        return app_derg

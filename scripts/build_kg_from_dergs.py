@@ -6,9 +6,9 @@ import utils
 from derg import KnowledgeGraph
 
 
-def run(dergs_dir, output_dir, derg_name):
+def run(dergs_dir, output_dir, derg_name, include_3lib):
     dergs = utils.load_dergs(dergs_dir, derg_name)
-    kg = KnowledgeGraph(dergs)
+    kg = KnowledgeGraph(dergs, include_3lib)
     kg.output(output_dir)
 
 
@@ -25,6 +25,8 @@ def parse_args():
                         required=True, help="path to output dir")
     parser.add_argument("-derg_name", action="store", dest="derg_name", default="derg.json",
                         required=False, help="the name of derg")
+    parser.add_argument("-include_3lib", action="store_true", dest="include_3lib", default=False,
+                        required=False, help="whether the knowledge includes third party library nodes")
 
     options = parser.parse_args()
     print options
@@ -36,7 +38,7 @@ def main():
     the main function
     """
     opts = parse_args()
-    run(opts.dergs_dir, opts.output_dir, opts.derg_name)
+    run(opts.dergs_dir, opts.output_dir, opts.derg_name, opts.include_3lib)
 
     return
 

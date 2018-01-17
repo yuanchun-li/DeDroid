@@ -1,6 +1,8 @@
 import difflib
 import os
 import re
+import signal
+
 
 PRIMITIVE_TYPES = \
     [u'void', u'int', u'short', u'long', u'float', u'double', u'boolean', u'byte', u'char']
@@ -327,3 +329,19 @@ def load_dergs(dergs_dir, derg_name):
                 derg_path = os.path.join(path, file_name)
                 dergs.append(DERG(derg_path))
     return dergs
+
+
+class timeout:
+    def __init__(self, seconds=1, error_message='Timeout'):
+        self.seconds = seconds
+        self.error_message = error_message
+
+    def handle_timeout(self, signum, frame):
+        raise RuntimeError(self.error_message)
+
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.seconds)
+
+    def __exit__(self, type, value, traceback):
+        signal.alarm(0)
