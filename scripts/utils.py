@@ -327,7 +327,10 @@ def load_dergs(dergs_dir, derg_name):
         for file_name in file_names:
             if file_name == derg_name:
                 derg_path = os.path.join(path, file_name)
-                dergs.append(DERG(derg_path))
+                try:
+                    dergs.append(DERG(derg_path))
+                except:
+                    print("Error while loading %s" % derg_path)
     return dergs
 
 

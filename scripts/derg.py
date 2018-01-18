@@ -170,9 +170,9 @@ class DERG(object):
             node_hashes.add(self.get_node_hash(node, refresh))
         return node_hashes
 
-    def get_kg_mappings(self):
+    def get_kg_mappings(self, include_3lib=False):
         # get name mappings in knowledge graph
-        return KnowledgeGraph.get_unknown_node_name_mappings(self)
+        return KnowledgeGraph.get_unknown_node_name_mappings(self, include_3lib)
 
 
 KG_KNOWN_RELATION_NAMES = \
@@ -200,7 +200,7 @@ KG_INCLUDED_RELATION_NAMES = KG_KNOWN_RELATION_NAMES
 
 
 class KnowledgeGraph(object):
-    def __init__(self, dergs, include_3lib=True):
+    def __init__(self, dergs, include_3lib=False):
         self.dergs = dergs
         self.include_3lib = include_3lib
         self._kg_id_offset = 0
@@ -228,7 +228,7 @@ class KnowledgeGraph(object):
         return node['type'] in KG_KNOWN_NODE_TYPES or (node['name'] == 'DERG_ROOT' and node['type'] == 'package')
 
     @staticmethod
-    def is_included(node, include_3lib=True):
+    def is_included(node, include_3lib=False):
         if node['type'] not in KG_INCLUDED_NODE_TYPES:
             return False
         if (not include_3lib) and node['type'].endswith('_3lib'):
@@ -238,20 +238,23 @@ class KnowledgeGraph(object):
     @staticmethod
     def get_node_name(node):
         if KnowledgeGraph.is_known(node):
-            return '%s:%s' % (node['type'], node['sig'].replace(' ', ''))
+            return '%s:%s' % (node['type'], node['sig'].replace(' ', '~'))
         else:
             return node['name']
 
     @staticmethod
-    def get_unknown_node_name_mappings(derg, include_3lib=True):
+    def get_unknown_node_name_mappings(derg, include_3lib=False):
         name_mappings = []
         for node in derg.nodes():
             if KnowledgeGraph.is_known(node):
                 continue
-            KnowledgeGraph.is_included(node, include_3lib)
-            original_name = node['original_name']
-            global_id = derg.get_node_global_id(node)
-            name_mappings.append((global_id, original_name))
+            if KnowledgeGraph.is_included(node, include_3lib):
+                if 'original_name' not in node:
+                    print("get_unknown_node_name_mappings error " + node['id'])
+                    continue
+                original_name = node['original_name']
+                global_id = derg.get_node_global_id(node)
+                name_mappings.append((global_id, original_name))
         return name_mappings
 
     def get_known_nodes_and_relations(self):
